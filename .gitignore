@@ -1,0 +1,7 @@
+/.env
+node_modules/
+/.vscode
+data/*.db
+data/*.sqlite
+data/indexer_state.json
+package-lock.json

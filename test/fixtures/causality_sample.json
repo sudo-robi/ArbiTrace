@@ -1,0 +1,28 @@
+{
+  "detection": {
+    "l1Receipt": {
+      "transactionHash": "0xL1TX",
+      "blockNumber": 123456,
+      "status": 1,
+      "gasUsed": 21000
+    },
+    "l2Receipt": {
+      "transactionHash": "0xL2TX",
+      "blockNumber": 654321,
+      "status": 0,
+      "gasUsed": 800000,
+      "gasLimit": 800000
+    }
+  },
+  "retryable": {
+    "ticketId": "0xTICKET",
+    "transactionHash": "0xL1TX",
+    "blockNumber": 123456,
+    "from": "0xFrom",
+    "to": "0xTo",
+    "gasLimit": "800000",
+    "maxFeePerGas": "1000000000",
+    "l2CallValue": "1000",
+    "data": "0x"
+  }
+}
