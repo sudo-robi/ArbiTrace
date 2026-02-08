@@ -148,13 +148,13 @@ User Browser (http://localhost:3000)
   Express Server (pm2)
         ↓
   7-Step Analysis Pipeline:
-  1. Parse & validate tx hash
-  2. Query L1 & L2 providers
+  1. Parse and validate tx hash
+  2. Query L1 and L2 providers
   3. Detect tx location
   4. Parse retryable logs (Inbox ABI)
   5. Fetch L2 trace info
   6. Detect Stylus execution
-  7. Classify failures & explain
+  7. Classify failures and explain
         ↓
    Return JSON timeline
         ↓
@@ -206,17 +206,17 @@ A: Yes. SQLite can handle multi-week L1 ranges. Trace normalization is O(n) on l
 /home/robi/Desktop/ArbiTrace/
 ├── src/
 │   ├── server.js              # Express server + /analyze pipeline
-│   ├── arbitrum.js            # L1/L2 detection & retryable parsing
+│   ├── arbitrum.js            # L1/L2 detection and retryable parsing
 │   ├── traceNormalizer.js     # Logs → action graph timeline
-│   ├── stylusParser.js        # WASM execution & panic codes
+│   ├── stylusParser.js        # WASM execution and panic codes
 │   ├── indexer.js             # SQLite-backed L1 indexer
-│   └── run_checks_and_index.js # RPC validation & indexer runner
+│   └── run_checks_and_index.js # RPC validation and indexer runner
 ├── public/
 │   └── index.html             # Frontend UI
 ├── data/
 │   └── tickets.db             # SQLite database (tickets table)
 ├── .env                        # RPC configuration
-├── package.json               # Dependencies & scripts
+├── package.json               # Dependencies and scripts
 ├── MVP_COMPLETE.md            # Status report
 ├── DEMO_SCRIPT.md             # Full demo walkthrough
 ├── QUICK_START.md             # This file
@@ -261,7 +261,7 @@ sqlite3 data/tickets.db ".tables"
 
 ---
 
-## 📊 NEW: Pattern Archive & Analytics
+## 📊 NEW: Pattern Archive and Analytics
 
 ### View Failure Patterns
 Click **📊 Leaderboard** in the navbar to see:

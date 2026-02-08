@@ -29,6 +29,10 @@ import auth from './auth.js'
 import { initLeaderboardAnalytics, getContractRiskScore, getTopRiskyContracts as getTopRiskyContractsAnalytics, getFailureTypeStats, getTrendAnalysis, getSeverityDistribution, getLeaderboardStats } from './leaderboardAnalytics.js'
 import { initGasEstimation, estimateOptimalGas, getGasOptimizationTips, buildMLFeatureMatrix, detectContractType, getContractGasHistory, calculateGasStatistics, analyzeFailurePatterns } from './smartGasEstimation.js'
 
+import { initOnchainIntegration, mountOnchainRoutes } from './src/onchainIntegration.js';
+const listener = await initOnchainIntegration(indexerInstance, db);
+mountOnchainRoutes(app, listener);
+
 dotenv.config()
 
 const __filename = fileURLToPath(import.meta.url)

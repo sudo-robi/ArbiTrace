@@ -73,6 +73,70 @@ MVP Features
 - Identifies WASM contract execution on Arbitrum
 - Detects panic codes and revert reasons
 
+✅ Onchain Incident Registry (Arbitrum Sepolia)
+- Minimal smart contract for anchoring retryable/Stylus failures
+- Emits canonical `RetryableIncidentReported` events
+- Provides read-only aggregation view (top failure types)
+- No heavy storage; event-driven and L2-friendly
+
+What's next
+
+- Opinionated failure explanations ("Your retryable failed because maxGas was too low...")
+- Real-time transaction polling
+- Multi-chain support (other L2s)
+- Advanced trace analytics
+
+## Onchain Incident Registry
+
+### Deployment Summary
+
+The `RetryableIncidentRegistry` smart contract has been deployed on **Arbitrum Sepolia testnet**.
+
+| Item | Value |
+|------|-------|
+| ✅ **Status** | Successfully deployed and verified |
+| **Contract Address** | `0x915cC86fE0871835e750E93e025080FFf9927A3f` |
+| **Chain** | Arbitrum Sepolia (Testnet) |
+| **Transaction Hash** | `0xd352104258fa7cfadff4f682cfe9aef57e36d5195af5643c502a9c190103428a` |
+| **Block** | 240859932 |
+| **Gas Used** | 549,092 gas @ 0.02 gwei |
+| **Cost** | 0.00001098184 ETH |
+| **Verification** | ✅ Source code publicly verified on [Arbiscan](https://sepolia.arbiscan.io/address/0x915cc86fe0871835e750e93e025080fff9927a3f) |
+
+### What It Does
+
+- **Accepts developer-submitted incident reports** for retryable + Stylus failures
+- **Canonicalizes failures** via structured enums and onchain fingerprints
+- **Emits `RetryableIncidentReported` events** indexed by reporter and tx hash
+- **Provides read-only aggregation** (top failure types by count)
+- **Minimal storage**: one anchored incident per L2 txHash + small counters
+
+### Failure Types Supported
+
+```solidity
+enum FailureType {
+    InsufficientSubmissionCost,  // 0
+    MaxGasTooLow,                // 1
+    GasPriceBidTooLow,           // 2
+    L1Revert,                    // 3
+    L2Revert,                    // 4
+    WASMPanic                    // 5
+}
+```
+
+### Integration
+
+See [ONCHAIN_INTEGRATION.md](./ONCHAIN_INTEGRATION.md) for:
+- How to initialize the event listener
+- REST endpoints for querying incidents
+- Example: reporting an incident from your debugger
+- Database schema
+
+### View on Explorer
+
+- **Arbiscan**: https://sepolia.arbiscan.io/address/0x915cc86fe0871835e750e93e025080fff9927a3f
+- **Contract Code**: [src/contracts/RetryableIncidentRegistry.sol](./src/contracts/RetryableIncidentRegistry.sol)
+
 What's next
 
 - Opinionated failure explanations ("Your retryable failed because maxGas was too low...")

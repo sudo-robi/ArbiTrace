@@ -7,7 +7,7 @@
 ├── package.json                    # Node dependencies
 ├── .env.example                    # RPC config template
 ├── README.md                       # Quick start guide
-├── DEMO.md                         # Testing & demo guide
+├── DEMO.md                         # Testing and demo guide
 │
 ├── src/
 │   ├── server.js                   # Express server + /analyze endpoint

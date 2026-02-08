@@ -1,0 +1,84 @@
+ArbiTrace: Arbitrum Transaction Debugger
+## ArbiTrace — Arbitrum Transaction Debugger (SUMMARY)
+
+## What it is
+
+ArbiTrace is a focused debugging tool for Arbitrum developers. Give it a single transaction hash (L1 or L2) and it returns an opinionated, actionable explanation of why the transaction or retryable failed.
+
+## Key Features
+
+- Detects L1 ↔ L2 retryable flows and identifies whether a hash is L1 or L2
+- Parses retryable ticket creation logs and tracks lifecycle events (auto-redeem, manual redeem, failures)
+- Classifies failure reasons into a small, actionable taxonomy:
+	- Insufficient submission cost
+	- `maxGas` too low
+	- `gasPriceBid` too low
+	- L1 revert
+	- L2 revert
+	- WASM / Stylus panic (with panic codes)
+- Visual timeline UI: color-coded nodes (green = confirmed, red = failed, yellow = pending) with a one-click raw-data toggle
+
+## Onchain Incident Registry (anchor and telemetry)
+
+We added a minimal onchain registry so developers can permanently anchor canonical failure fingerprints and emit structured telemetry that any tool can consume.
+
+- Contract: `RetryableIncidentRegistry` (source: `src/contracts/RetryableIncidentRegistry.sol`)
+- Purpose: Accept developer-submitted incident reports (fingerprint computed offchain), emit `RetryableIncidentReported` events, keep tiny anchors and aggregated counters.
+- Design constraints: no full traces onchain, no re-execution, minimal storage.
+
+### Deployed (Arbitrum Sepolia)
+
+| Item | Value |
+|------|-------|
+| Status | ✅ Deployed and verified |
+| Contract address | `0x915cC86fE0871835e750E93e025080FFf9927A3f` |
+| Chain | Arbitrum Sepolia (testnet) |
+| Transaction | `0xd352104258fa7cfadff4f682cfe9aef57e36d5195af5643c502a9c190103428a` |
+| Block | `240859932` |
+| Gas used | `549,092` |
+| Cost paid | `0.00001098184 ETH` |
+| Verification | ✅ Verified on Arbiscan: https://sepolia.arbiscan.io/address/0x915cc86fe0871835e750e93e025080fff9927a3f |
+
+## How it works (high-level)
+
+1. Your offchain debugger computes a canonical `fingerprint` for a failure (panic code, revert selector, or retryable params bucket).
+2. The debugger calls `reportIncident(txHash, failureType, fingerprint)` on `RetryableIncidentRegistry` to anchor and emit the event.
+3. The registry stores a minimal anchor (one struct per `txHash`) and increments a small counter per `FailureType`.
+4. Offchain indexers or your debugger subscribe to `RetryableIncidentReported` events and merge that telemetry into the UI and analytics.
+
+## API / Contract read methods
+
+- `reportIncident(bytes32 txHash, FailureType failureType, bytes32 fingerprint)` — main entry (external)
+- `getFailureCounts()` — returns counts per failure type
+- `topFailures(uint256 n)` — returns top `n` failure types and counts
+- `getIncident(bytes32 txHash)` — read anchored incident for a transaction hash
+
+## Integration (quick)
+
+- Foundry deploy script: `script/Deploy.s.sol`
+- Event listener: `src/onchainEventListener.js` (polls/queries events, stores into SQLite)
+- Integration example: `src/onchainIntegration.js` — exposes REST endpoints:
+	- `GET /api/incidents/onchain` — recent incidents
+	- `GET /api/incidents/onchain/:txHash` — incident detail
+	- `GET /api/failures/top` — top failure types
+
+## How ArbiTrace differs from block explorers
+
+- Explorers (Etherscan/Arbiscan) provide raw chain data, search, and verified code. ArbiTrace provides a domain-specific analysis layer: normalized retryable lifecycle, failure classification, and canonical telemetry anchored onchain.
+- ArbiTrace is consumer-first: paste a tx hash → get an exact cause + remediation hints. It does not aim to replace explorers.
+
+## Next steps
+
+- Add alerts/webhooks for fingerprint spikes
+- Move event listening to websocket provider for lower latency
+- Expand fingerprint taxonomy and enrichment rules
+
+## Files of interest
+
+- `src/contracts/RetryableIncidentRegistry.sol` — onchain registry
+- `script/Deploy.s.sol` — Foundry deployment script
+- `src/onchainEventListener.js` — event listener and DB storage
+- `src/onchainIntegration.js` — example integration + REST routes
+- `ONCHAIN_INTEGRATION.md` — integration guide and examples
+
+---
