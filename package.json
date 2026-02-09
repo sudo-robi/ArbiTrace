@@ -17,7 +17,7 @@
     "better-sqlite3": "^8.0.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-    "helmet": "^6.0.1",
+    "helmet": "^8.1.0",
     "express-rate-limit": "^6.7.0",
     "express-validator": "^7.0.1",
     "bcryptjs": "^2.4.3",
