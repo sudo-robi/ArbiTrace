@@ -263,25 +263,38 @@ export function getTopRiskyContracts(limit = 50, options = {}) {
     } = options
 
     // Get all contracts with patterns
-    let patterns = db.prepare(`
-      SELECT 
-        contract_address_hash,
-        total_failures,
-        success_count,
-        failure_distribution,
-        last_failure_time,
-        total_viewers,
-        average_rating
-      FROM failure_patterns
-      WHERE total_failures >= ?
-      ORDER BY 
-        CASE 
-          WHEN ? = 'risk' THEN total_failures DESC
-          WHEN ? = 'recent' THEN last_failure_time DESC
-          ELSE total_failures DESC
-        END
-      LIMIT ?
-    `).all(minFailures, sortBy, sortBy, limit * 2) // Get more, filter afterward
+    let patterns
+    if (sortBy === 'recent') {
+      patterns = db.prepare(`
+        SELECT 
+          contract_address_hash,
+          total_failures,
+          success_count,
+          failure_distribution,
+          last_failure_time,
+          total_viewers,
+          average_rating
+        FROM failure_patterns
+        WHERE total_failures >= ?
+        ORDER BY last_failure_time DESC
+        LIMIT ?
+      `).all(minFailures, limit * 2)
+    } else {
+      patterns = db.prepare(`
+        SELECT 
+          contract_address_hash,
+          total_failures,
+          success_count,
+          failure_distribution,
+          last_failure_time,
+          total_viewers,
+          average_rating
+        FROM failure_patterns
+        WHERE total_failures >= ?
+        ORDER BY total_failures DESC
+        LIMIT ?
+      `).all(minFailures, limit * 2)
+    }
 
     // Calculate risk scores and filter
     const leaderboard = patterns

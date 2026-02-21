@@ -23,7 +23,7 @@ let db = null
 export function initPatternArchive() {
   db = new Database(DB_PATH)
   db.pragma('journal_mode = WAL')
-  
+
   // Create tables if they don't exist
   db.exec(`
     -- Main failure record (anonymized)
@@ -143,9 +143,9 @@ export function initPatternArchive() {
  */
 export function recordFailure(failureData) {
   if (!db) initPatternArchive()
-  
+
   const stmt = db.prepare(`
-    INSERT INTO failures (
+    INSERT OR IGNORE INTO failures (
       l1_tx_hash_prefix,
       l2_tx_hash_prefix,
       contract_address_hash,
@@ -165,7 +165,7 @@ export function recordFailure(failureData) {
       panic_code
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
-  
+
   try {
     const result = stmt.run(
       failureData.l1TxHashPrefix || null,
@@ -186,10 +186,10 @@ export function recordFailure(failureData) {
       failureData.isStylus ? 1 : 0,
       failureData.panicCode || null
     )
-    
+
     // Update pattern aggregation
     updatePatternStats(failureData.contractAddressHash, failureData)
-    
+
     return result.lastInsertRowid
   } catch (e) {
     console.error('Error recording failure:', e.message)
@@ -208,7 +208,7 @@ export function recordFailure(failureData) {
  */
 export function findSimilarFailures(contractAddressHash, params = {}) {
   if (!db) initPatternArchive()
-  
+
   // Find exact contract matches first
   const exactMatches = db.prepare(`
     SELECT 
@@ -222,29 +222,29 @@ export function findSimilarFailures(contractAddressHash, params = {}) {
     ORDER BY f.created_at DESC
     LIMIT 50
   `).all(contractAddressHash)
-  
+
   // Calculate similarity scores (same failure reason, similar gas params)
   const scored = exactMatches.map(failure => {
     let score = 1.0  // 100% match for same contract
-    
+
     // Deduct for different failure reasons
     if (params.failureReason && params.failureReason !== failure.failure_reason) {
       score -= 0.2
     }
-    
+
     // Deduct for very different gas parameters (within 50% = similar)
     if (params.gasLimit && failure.gas_limit) {
       const ratio = params.gasLimit / failure.gas_limit
       if (ratio > 1.5 || ratio < 0.67) score -= 0.1
     }
-    
+
     return {
       ...failure,
       matchScore: Math.max(0, score),
       fixedCount: failure.fix_count
     }
   })
-  
+
   return scored.filter(s => s.matchScore > 0.6).sort((a, b) => b.matchScore - a.matchScore)
 }
 
@@ -258,14 +258,14 @@ export function findSimilarFailures(contractAddressHash, params = {}) {
  */
 export function getFailurePattern(contractBytecodeHash) {
   if (!db) initPatternArchive()
-  
+
   const pattern = db.prepare(`
     SELECT * FROM failure_patterns
     WHERE contract_bytecode_hash = ?
   `).get(contractBytecodeHash)
-  
+
   if (!pattern) return null
-  
+
   // Calculate distribution percentages
   const total = pattern.total_failures || 1
   return {
@@ -286,29 +286,29 @@ export function getFailurePattern(contractBytecodeHash) {
  */
 function updatePatternStats(contractBytecodeHash, failureData) {
   if (!contractBytecodeHash) return
-  
+
   const stmt = db.prepare(`
     SELECT * FROM failure_patterns
     WHERE contract_bytecode_hash = ?
   `)
-  
+
   const existing = stmt.get(contractBytecodeHash)
   const reason = failureData.failureReason || 'UNKNOWN'
-  
+
   if (existing) {
     // Update existing pattern
     const updateStmt = db.prepare(`
       UPDATE failure_patterns
       SET 
         total_failures = total_failures + 1,
-        failures_${getReasonColumn(reason)} = ${getReasonColumn(reason)} + 1,
+        ${getReasonColumn(reason)} = ${getReasonColumn(reason)} + 1,
         avg_gas_limit = ((avg_gas_limit * total_failures) + ?) / (total_failures + 1),
         avg_max_fee_per_gas = ((avg_max_fee_per_gas * total_failures) + ?) / (total_failures + 1),
         most_recent_at = CURRENT_TIMESTAMP,
         updated_at = CURRENT_TIMESTAMP
       WHERE contract_bytecode_hash = ?
     `)
-    
+
     try {
       updateStmt.run(
         failureData.gasLimit || 0,
@@ -320,7 +320,7 @@ function updatePatternStats(contractBytecodeHash, failureData) {
       db.prepare(`
         UPDATE failure_patterns
         SET total_failures = total_failures + 1,
-            failures_${getReasonColumn(reason)} = ${getReasonColumn(reason)} + 1,
+            ${getReasonColumn(reason)} = ${getReasonColumn(reason)} + 1,
             most_recent_at = CURRENT_TIMESTAMP
         WHERE contract_bytecode_hash = ?
       `).run(contractBytecodeHash)
@@ -337,7 +337,7 @@ function updatePatternStats(contractBytecodeHash, failureData) {
         avg_call_data_length
       ) VALUES (?, ?, 1, ?, ?, ?)
     `)
-    
+
     insertStmt.run(
       contractBytecodeHash,
       1,
@@ -346,7 +346,7 @@ function updatePatternStats(contractBytecodeHash, failureData) {
       failureData.callDataLength || 0
     )
   }
-  
+
   // Recalculate risk score
   updateRiskScore(contractBytecodeHash)
 }
@@ -379,19 +379,19 @@ function updateRiskScore(contractBytecodeHash) {
     SELECT * FROM failure_patterns
     WHERE contract_bytecode_hash = ?
   `).get(contractBytecodeHash)
-  
+
   if (!pattern) return
-  
+
   let score = 0
   const total = pattern.total_failures || 1
-  
+
   // Factor 1: Failure volume (0-40 points)
   // 10+ failures = high risk
   if (total >= 100) score += 40
   else if (total >= 50) score += 30
   else if (total >= 20) score += 20
   else if (total >= 10) score += 10
-  
+
   // Factor 2: Concentration (0-40 points)
   // If 80%+ of failures are same type = design issue
   const maxReason = Math.max(
@@ -403,12 +403,12 @@ function updateRiskScore(contractBytecodeHash) {
     pattern.failures_timeout
   )
   const concentration = (maxReason / total) * 100
-  
+
   if (concentration >= 80) score += 40
   else if (concentration >= 70) score += 30
   else if (concentration >= 60) score += 20
   else if (concentration >= 50) score += 10
-  
+
   // Factor 3: Recency (0-20 points)
   // Recent failures more worrisome
   const daysSinceLastFailure = Math.max(0,
@@ -417,7 +417,7 @@ function updateRiskScore(contractBytecodeHash) {
   if (daysSinceLastFailure < 1) score += 20
   else if (daysSinceLastFailure < 7) score += 15
   else if (daysSinceLastFailure < 30) score += 10
-  
+
   db.prepare(`
     UPDATE failure_patterns
     SET risk_score = ?
@@ -430,12 +430,12 @@ function updateRiskScore(contractBytecodeHash) {
  */
 export function addUserTag(failureId, tagType, tagValue, userHash) {
   if (!db) initPatternArchive()
-  
+
   const stmt = db.prepare(`
     INSERT INTO user_tags (failure_id, tag_type, tag_value, user_hash)
     VALUES (?, ?, ?, ?)
   `)
-  
+
   try {
     return stmt.run(failureId, tagType, tagValue, userHash).lastInsertRowid
   } catch (e) {
@@ -449,7 +449,7 @@ export function addUserTag(failureId, tagType, tagValue, userHash) {
  */
 export function getTopRiskyContracts(limit = 20) {
   if (!db) initPatternArchive()
-  
+
   return db.prepare(`
     SELECT 
       contract_bytecode_hash,
@@ -471,7 +471,7 @@ export function getTopRiskyContracts(limit = 20) {
  */
 export function getArchiveStats() {
   if (!db) initPatternArchive()
-  
+
   const stats = db.prepare(`
     SELECT 
       COUNT(*) as total_failures,
@@ -486,7 +486,7 @@ export function getArchiveStats() {
       AVG(max_fee_per_gas) as avg_max_fee_per_gas
     FROM failures
   `).get()
-  
+
   return {
     ...stats,
     failureBreakdown: {

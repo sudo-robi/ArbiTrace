@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +14,8 @@
 
     :root {
       /* Use a single standard blue color instead of gradients */
-      --primary: #2563eb; /* standard blue */
+      --primary: #2563eb;
+      /* standard blue */
       --primary-dark: #1e4fb8;
       --success: #10b981;
       --danger: #ef4444;
@@ -89,11 +91,12 @@
       background: var(--panel-bg);
       padding: 12px;
       border-radius: 10px;
-      border: 1px solid rgba(21, 128, 250, 0.08); /* subtle blue tint */
+      border: 1px solid rgba(21, 128, 250, 0.08);
+      /* subtle blue tint */
       color: var(--text);
       line-height: 1.5;
       font-size: 13px;
-      box-shadow: 0 8px 26px rgba(16,24,40,0.06);
+      box-shadow: 0 8px 26px rgba(16, 24, 40, 0.06);
       backdrop-filter: blur(8px) saturate(120%);
       -webkit-backdrop-filter: blur(8px) saturate(120%);
     }
@@ -108,7 +111,7 @@
       height: 160px;
       transform: rotate(25deg);
       /* removed decorative gradient; use a faint blue circle for subtle accent */
-      background: rgba(37,99,235,0.06);
+      background: rgba(37, 99, 235, 0.06);
       pointer-events: none;
       filter: blur(6px);
       opacity: 0.95;
@@ -116,8 +119,8 @@
 
     body.dark-mode .panel {
       background: var(--panel-bg);
-      border: 1px solid rgba(99,102,241,0.06);
-      box-shadow: 0 10px 28px rgba(2,6,23,0.6);
+      border: 1px solid rgba(99, 102, 241, 0.06);
+      box-shadow: 0 10px 28px rgba(2, 6, 23, 0.6);
       color: #e6eef8;
     }
 
@@ -145,7 +148,7 @@
     .status-badge.pending {
       background: var(--primary);
       color: white;
-      box-shadow: 0 8px 18px rgba(37,99,235,0.12);
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
     }
 
     /* Mempool list items */
@@ -156,16 +159,17 @@
       padding: 8px;
       border-radius: 6px;
       transition: background 0.18s ease, transform 0.12s ease;
-      border: 1px solid rgba(15,23,42,0.04);
+      border: 1px solid rgba(15, 23, 42, 0.04);
       margin-bottom: 6px;
-      background: rgba(255,255,255,0.02);
+      background: rgba(255, 255, 255, 0.02);
       font-size: 12px;
     }
 
-    .mempool-item:hover, .mempool-item:focus {
-      background: rgba(37,99,235,0.06);
+    .mempool-item:hover,
+    .mempool-item:focus {
+      background: rgba(37, 99, 235, 0.06);
       transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+      box-shadow: 0 6px 18px rgba(16, 24, 40, 0.06);
     }
 
     .mempool-badge {
@@ -179,12 +183,12 @@
 
     .mempool-badge.pending {
       background: var(--primary);
-      box-shadow: 0 6px 14px rgba(37,99,235,0.12);
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.12);
     }
 
     body.dark-mode .mempool-item {
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.02);
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.02);
     }
 
     .navbar-left {
@@ -233,16 +237,23 @@
       .main-wrapper {
         grid-template-columns: 1fr;
       }
-      .sidebar, .right-panel {
+
+      .sidebar,
+      .right-panel {
         grid-column: 1;
         order: 0;
       }
+
       .main-content {
         order: 2;
       }
     }
 
-    .sidebar, .main-content, .right-panel, .card, .panel {
+    .sidebar,
+    .main-content,
+    .right-panel,
+    .card,
+    .panel {
       background: white;
       border-radius: 12px;
       border: 1px solid var(--border);
@@ -389,21 +400,24 @@
     }
 
     .network-btn {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 8px;
-      background: var(--lighter);
+      padding: 10px 14px;
       border: 1px solid var(--border);
       border-radius: 6px;
+      background: var(--lighter);
       cursor: pointer;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 500;
       transition: var(--transition);
+      display: inline-block;
+      margin-right: 8px;
+      margin-bottom: 8px;
     }
 
     .network-btn.active {
       background: var(--primary);
       color: white;
       border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
     }
 
     /* Main Content */
@@ -494,9 +508,17 @@
       flex-shrink: 0;
     }
 
-    .timeline-node.confirmed .timeline-dot { background: var(--success); }
-    .timeline-node.failed .timeline-dot { background: var(--danger); }
-    .timeline-node.pending .timeline-dot { background: var(--warning); }
+    .timeline-node.confirmed .timeline-dot {
+      background: var(--success);
+    }
+
+    .timeline-node.failed .timeline-dot {
+      background: var(--danger);
+    }
+
+    .timeline-node.pending .timeline-dot {
+      background: var(--warning);
+    }
 
     .timeline-content {
       flex: 1;
@@ -592,9 +614,8 @@
     .right-panel {
       position: sticky;
       top: 80px;
-      height: fit-content;
-      max-height: calc(100vh - 100px);
-      overflow-y: auto;
+      height: 100%;
+
     }
 
     .status-badge {
@@ -826,7 +847,9 @@
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .error-banner {
@@ -885,11 +908,14 @@
       .main-wrapper {
         grid-template-columns: 1fr;
       }
+
       .sidebar {
         position: static;
       }
+
       .right-panel {
         position: static;
+        background-color: red;
       }
     }
 
@@ -898,15 +924,18 @@
         flex-direction: column;
         gap: 12px;
       }
+
       .search-bar {
         flex-direction: column;
       }
+
       .btn {
         width: 100%;
       }
     }
   </style>
 </head>
+
 <body>
   <div class="app">
     <!-- Navbar -->
@@ -919,37 +948,50 @@
         <button class="mode-toggle" id="leaderboardBtn" title="Open leaderboard">📊</button>
         <button class="mode-toggle" id="modeToggle" title="Toggle dark mode">🌙</button>
         <button id="mempoolToggle" class="mode-toggle" title="Toggle mempool (live)">⚡</button>
-        <span id="mempoolIndicator" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ddd; margin-left:8px; vertical-align:middle;" title="Mempool status"></span>
+        <span id="mempoolIndicator"
+          style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ddd; margin-left:8px; vertical-align:middle;"
+          title="Mempool status"></span>
         <button id="adminBtn" class="mode-toggle" title="Admin">⚙️</button>
       </div>
     </div>
 
     <!-- Leaderboard Modal -->
-    <div id="leaderboardModal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2000;">
-      <div style="background: white; border-radius: 12px; max-width: 1200px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+    <div id="leaderboardModal" class="modal hidden"
+      style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2000;">
+      <div
+        style="background: white; border-radius: 12px; max-width: 1200px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
         <!-- Modal Header -->
-        <div style="padding: 20px; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+        <div
+          style="padding: 20px; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
           <div>
             <h2 style="margin: 0; font-size: 24px; margin-bottom: 4px;">📊 Contract Risk Leaderboard</h2>
             <div style="font-size: 12px; opacity: 0.9;">Historical failure analysis and risk rankings</div>
           </div>
-          <button onclick="document.getElementById('leaderboardModal').classList.add('hidden'); document.getElementById('leaderboardModal').style.display='none';" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 20px;">×</button>
+          <button
+            onclick="document.getElementById('leaderboardModal').classList.add('hidden'); document.getElementById('leaderboardModal').style.display='none';"
+            style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 20px;">×</button>
         </div>
 
         <!-- Modal Content -->
         <div style="padding: 20px;">
           <!-- Statistics Row -->
-          <div id="leaderboardStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px;"></div>
+          <div id="leaderboardStats"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px;">
+          </div>
 
           <!-- Tabs -->
-          <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap;">
-            <button class="leaderboard-tab active" data-tab="risky" style="padding: 8px 16px; background: none; border: none; cursor: pointer; font-weight: 600; border-bottom: 3px solid #2563eb;">
+          <div
+            style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap;">
+            <button class="leaderboard-tab active" data-tab="risky"
+              style="padding: 8px 16px; background: none; border: none; cursor: pointer; font-weight: 600; border-bottom: 3px solid #2563eb;">
               🔴 Risky Contracts
             </button>
-            <button class="leaderboard-tab" data-tab="failures" style="padding: 8px 16px; background: none; border: none; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">
+            <button class="leaderboard-tab" data-tab="failures"
+              style="padding: 8px 16px; background: none; border: none; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">
               📈 Failure Types
             </button>
-            <button class="leaderboard-tab" data-tab="trends" style="padding: 8px 16px; background: none; border: none; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">
+            <button class="leaderboard-tab" data-tab="trends"
+              style="padding: 8px 16px; background: none; border: none; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">
               📉 Trends
             </button>
           </div>
@@ -959,7 +1001,8 @@
             <div style="margin-bottom: 12px;">
               <label style="font-size: 12px; margin-right: 12px;">
                 Filter by risk:
-                <select id="riskFilter" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; margin-left: 4px;">
+                <select id="riskFilter"
+                  style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; margin-left: 4px;">
                   <option value="">All levels</option>
                   <option value="CRITICAL">🔴 Critical</option>
                   <option value="HIGH">🟠 High</option>
@@ -994,10 +1037,13 @@
 
         <div style="margin-bottom: 16px;">
           <details style="cursor: pointer;">
-            <summary style="padding: 8px; background: var(--lighter); border-radius: 6px; font-weight: 600; font-size: 13px; margin-bottom: 8px;">📤 Batch Analysis</summary>
+            <summary
+              style="padding: 8px; background: var(--lighter); border-radius: 6px; font-weight: 600; font-size: 13px; margin-bottom: 8px;">
+              📤 Batch Analysis</summary>
             <div style="padding: 12px; background: var(--lighter); border-radius: 6px; margin-top: 8px;">
               <input type="file" id="csvFile" accept=".csv" style="font-size: 12px; padding: 8px;" />
-              <button class="btn btn-secondary btn-sm" id="uploadCsvBtn" style="width: 100%; margin-top: 8px;">Upload CSV</button>
+              <button class="btn btn-secondary btn-sm" id="uploadCsvBtn" style="width: 100%; margin-top: 8px;">Upload
+                CSV</button>
               <div id="batchProgress" style="font-size: 11px; color: var(--text-muted); margin-top: 8px;"></div>
             </div>
           </details>
@@ -1005,21 +1051,28 @@
 
         <div style="margin-bottom: 16px;">
           <details style="cursor: pointer;">
-            <summary style="padding: 8px; background: var(--lighter); border-radius: 6px; font-weight: 600; font-size: 13px; margin-bottom: 8px;">✅ Pre-Submit Validator</summary>
-            <div style="padding: 12px; background: var(--lighter); border-radius: 6px; margin-top: 8px; font-size: 12px;">
+            <summary
+              style="padding: 8px; background: var(--lighter); border-radius: 6px; font-weight: 600; font-size: 13px; margin-bottom: 8px;">
+              ✅ Pre-Submit Validator</summary>
+            <div
+              style="padding: 12px; background: var(--lighter); border-radius: 6px; margin-top: 8px; font-size: 12px;">
               <label style="display: block; margin-bottom: 8px;">
-                <strong>Gas Limit:</strong><br/>
-                <input type="number" id="validatorGasLimit" placeholder="e.g. 100000" style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid var(--border); border-radius: 4px;" />
+                <strong>Gas Limit:</strong><br />
+                <input type="number" id="validatorGasLimit" placeholder="e.g. 100000"
+                  style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid var(--border); border-radius: 4px;" />
               </label>
               <label style="display: block; margin-bottom: 8px;">
-                <strong>Max Fee/Gas (Wei):</strong><br/>
-                <input type="number" id="validatorMaxFee" placeholder="e.g. 5000000000" style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid var(--border); border-radius: 4px;" />
+                <strong>Max Fee/Gas (Wei):</strong><br />
+                <input type="number" id="validatorMaxFee" placeholder="e.g. 5000000000"
+                  style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid var(--border); border-radius: 4px;" />
               </label>
               <label style="display: block; margin-bottom: 8px;">
-                <strong>Submission Cost (Wei):</strong><br/>
-                <input type="number" id="validatorSubmissionCost" placeholder="e.g. 10000" style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid var(--border); border-radius: 4px;" />
+                <strong>Submission Cost (Wei):</strong><br />
+                <input type="number" id="validatorSubmissionCost" placeholder="e.g. 10000"
+                  style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid var(--border); border-radius: 4px;" />
               </label>
-              <button class="btn" id="validateParamsBtn" style="width: 100%; margin-top: 8px; padding: 8px; font-size: 12px;">Predict Success</button>
+              <button class="btn" id="validateParamsBtn"
+                style="width: 100%; margin-top: 8px; padding: 8px; font-size: 12px;">Predict Success</button>
               <div id="validationResult" style="margin-top: 8px;"></div>
             </div>
           </details>
@@ -1027,20 +1080,30 @@
 
         <div style="margin-bottom: 16px;">
           <details style="cursor: pointer;">
-            <summary style="padding: 8px; background: var(--lighter); border-radius: 6px; font-weight: 600; font-size: 13px; margin-bottom: 8px;">🔗 Shareable Debug Session</summary>
-            <div style="padding: 12px; background: var(--lighter); border-radius: 6px; margin-top: 8px; font-size: 12px;">
-              <p style="margin-bottom: 10px; color: var(--text-muted); font-size: 11px;">Share real-time analysis with teammates. They'll see your analysis as it happens.</p>
-              <button class="btn" id="createSessionBtn" style="width: 100%; margin-bottom: 8px; padding: 8px; font-size: 12px;">🚀 Create Shareable Session</button>
-              <div id="sessionShareInfo" style="display: none; margin-top: 8px; padding: 8px; background: white; border-radius: 4px; border: 1px solid var(--primary);">
+            <summary
+              style="padding: 8px; background: var(--lighter); border-radius: 6px; font-weight: 600; font-size: 13px; margin-bottom: 8px;">
+              🔗 Shareable Debug Session</summary>
+            <div
+              style="padding: 12px; background: var(--lighter); border-radius: 6px; margin-top: 8px; font-size: 12px;">
+              <p style="margin-bottom: 10px; color: var(--text-muted); font-size: 11px;">Share real-time analysis with
+                teammates. They'll see your analysis as it happens.</p>
+              <button class="btn" id="createSessionBtn"
+                style="width: 100%; margin-bottom: 8px; padding: 8px; font-size: 12px;">🚀 Create Shareable
+                Session</button>
+              <div id="sessionShareInfo"
+                style="display: none; margin-top: 8px; padding: 8px; background: white; border-radius: 4px; border: 1px solid var(--primary);">
                 <div style="font-weight: 600; color: var(--primary); margin-bottom: 6px;">Session Created!</div>
                 <div style="font-size: 11px; margin-bottom: 6px;">
-                  <strong>Share ID:</strong> <span id="sessionShareId" style="font-family: monospace; background: var(--lighter); padding: 2px 6px; border-radius: 3px;"></span>
+                  <strong>Share ID:</strong> <span id="sessionShareId"
+                    style="font-family: monospace; background: var(--lighter); padding: 2px 6px; border-radius: 3px;"></span>
                 </div>
                 <div style="font-size: 11px; margin-bottom: 6px;">
-                  <strong>Share URL:</strong><br/>
-                  <input type="text" id="sessionShareUrl" readonly style="width: 100%; padding: 4px; font-size: 10px; margin-top: 2px; border: 1px solid var(--border); border-radius: 3px;" />
+                  <strong>Share URL:</strong><br />
+                  <input type="text" id="sessionShareUrl" readonly
+                    style="width: 100%; padding: 4px; font-size: 10px; margin-top: 2px; border: 1px solid var(--border); border-radius: 3px;" />
                 </div>
-                <button id="copySessionUrlBtn" class="btn btn-secondary btn-sm" style="width: 100%; padding: 4px; font-size: 11px;">📋 Copy Link</button>
+                <button id="copySessionUrlBtn" class="btn btn-secondary btn-sm"
+                  style="width: 100%; padding: 4px; font-size: 11px;">📋 Copy Link</button>
               </div>
             </div>
           </details>
@@ -1048,7 +1111,22 @@
 
         <div class="network-selector">
           <h3>Network</h3>
-          <button class="network-btn active" data-network="arbitrum">Arbitrum One</button>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+            <button class="network-btn active" data-network="sepolia" style="margin:0; width:100%;">Arb Sepolia</button>
+            <button class="network-btn" data-network="arbitrum" style="margin:0; width:100%;">Arb One</button>
+            <button class="network-btn" data-network="nova" style="margin:0; width:100%;">Arb Nova</button>
+            <button class="network-btn" data-network="custom" style="margin:0; width:100%;">Custom</button>
+          </div>
+
+          <div id="customNetworkConfig" class="hidden"
+            style="padding: 10px; background: var(--lighter); border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">
+            <div style="font-size: 11px; margin-bottom: 8px; color: var(--text-muted); font-weight: 600;">Custom Chain
+              Config</div>
+            <input type="text" id="customL1Rpc" placeholder="L1 RPC URL"
+              style="width: 100%; font-size: 11px; margin-bottom: 6px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg);" />
+            <input type="text" id="customL2Rpc" placeholder="L2 RPC URL"
+              style="width: 100%; font-size: 11px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg);" />
+          </div>
         </div>
 
         <div>
@@ -1075,25 +1153,27 @@
             </defs>
             <!-- L1 Box -->
             <rect x="20" y="50" width="100" height="50" fill="#f3f4f6" stroke="#667eea" stroke-width="2" rx="4" />
-            <text x="70" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#1f2937">L1 Submission</text>
-            
+            <text x="70" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#1f2937">L1
+              Submission</text>
+
             <!-- Arrow -->
             <line x1="120" y1="75" x2="160" y2="75" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)" />
-            
+
             <!-- Inbox -->
             <rect x="160" y="50" width="100" height="50" fill="#f3f4f6" stroke="#667eea" stroke-width="2" rx="4" />
             <text x="210" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#1f2937">Inbox Event</text>
-            
+
             <!-- Arrow -->
             <line x1="260" y1="75" x2="300" y2="75" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)" />
-            
+
             <!-- L2 Box -->
             <rect x="300" y="50" width="100" height="50" fill="#f3f4f6" stroke="#667eea" stroke-width="2" rx="4" />
-            <text x="350" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#1f2937">L2 Execution</text>
-            
+            <text x="350" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#1f2937">L2
+              Execution</text>
+
             <!-- Arrow -->
             <line x1="400" y1="75" x2="440" y2="75" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)" />
-            
+
             <!-- Outcome Box -->
             <rect x="440" y="50" width="120" height="50" fill="#f3f4f6" stroke="#667eea" stroke-width="2" rx="4" />
             <text x="500" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="#1f2937">Outcome</text>
@@ -1155,7 +1235,7 @@
       <!-- Right Panel -->
       <div class="right-panel">
         <div id="statusBadge" class="hidden" style="margin-bottom: 16px;"></div>
-        
+
         <div id="metricsSection" class="metrics hidden">
           <div class="metric">
             <div class="metric-value" id="blockMetric">-</div>
@@ -1195,8 +1275,10 @@
             <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
               <div style="color: var(--warning);">🔄 Monitoring mempool...</div>
               <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
-                <input id="mempoolFilterAddress" placeholder="Filter address (from/to)" style="padding:6px; font-size:12px;" />
-                <input id="mempoolFilterSelector" placeholder="Filter selector (0x1234...)" style="padding:6px; font-size:12px; width:140px;" />
+                <input id="mempoolFilterAddress" placeholder="Filter address (from/to)"
+                  style="padding:6px; font-size:12px;" />
+                <input id="mempoolFilterSelector" placeholder="Filter selector (0x1234...)"
+                  style="padding:6px; font-size:12px; width:140px;" />
                 <button id="mempoolClearFilters" class="btn-sm btn-secondary">Clear</button>
               </div>
             </div>
@@ -1210,10 +1292,10 @@
             <button class="btn btn-secondary btn-sm" id="copyHashBtn">📋 Copy Hash</button>
             <button class="btn btn-secondary btn-sm" id="shareBtn">🔗 Share Analysis</button>
             <button class="btn btn-secondary btn-sm" id="viewArbiscanBtn">🔍 View on Arbiscan</button>
-              <button class="btn btn-secondary btn-sm" id="decodeCalldataBtn">🧩 Decode Calldata</button>
-              <button class="btn btn-secondary btn-sm" id="showRetryableBtn">🔁 Retryable Lifecycle</button>
-              <button class="btn btn-secondary btn-sm" id="showSimilarFailuresBtn">🔍 Similar Failures (Archive)</button>
-              <button class="btn btn-secondary btn-sm" id="showArchiveStatsBtn">📊 Archive Stats</button>
+            <button class="btn btn-secondary btn-sm" id="decodeCalldataBtn">🧩 Decode Calldata</button>
+            <button class="btn btn-secondary btn-sm" id="showRetryableBtn">🔁 Retryable Lifecycle</button>
+            <button class="btn btn-secondary btn-sm" id="showSimilarFailuresBtn">🔍 Similar Failures (Archive)</button>
+            <button class="btn btn-secondary btn-sm" id="showArchiveStatsBtn">📊 Archive Stats</button>
           </div>
         </div>
       </div>
@@ -1240,14 +1322,16 @@
       <div class="modal-header">
         <div>🔁 Retryable Lifecycle</div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <button class="btn btn-sm" id="openCausalityFromRetryable" title="Open causality details">🔗 Causality</button>
+          <button class="btn btn-sm" id="openCausalityFromRetryable" title="Open causality details">🔗
+            Causality</button>
           <button class="close-btn" id="closeRetryableModal">×</button>
         </div>
       </div>
       <div id="retryableBody">
         <div id="retryableLoading" style="display:none;">Loading retryable lifecycle...</div>
         <div id="retryableContent" style="display:none;"></div>
-        <div id="retryableEmpty" style="display:none; color:var(--text-muted);">No retryable ticket info found for this transaction.</div>
+        <div id="retryableEmpty" style="display:none; color:var(--text-muted);">No retryable ticket info found for this
+          transaction.</div>
       </div>
     </div>
   </div>
@@ -1262,7 +1346,9 @@
       <div id="patternBody" style="font-size: 12px;">
         <div id="patternLoading" style="display:none; text-align:center; padding:20px;">
           <div style="display:inline-block;">
-            <div style="width:24px; height:24px; border:3px solid rgba(37,99,235,0.3); border-top-color:#2563eb; border-radius:50%; animation:spin 1s linear infinite;"></div>
+            <div
+              style="width:24px; height:24px; border:3px solid rgba(37,99,235,0.3); border-top-color:#2563eb; border-radius:50%; animation:spin 1s linear infinite;">
+            </div>
           </div>
           <div>Finding similar failures...</div>
         </div>
@@ -1280,7 +1366,9 @@
         <div id="patternEmpty" style="display:none; color:var(--text-muted); text-align:center; padding:20px;">
           No similar failures found yet in the archive.
         </div>
-        <div id="patternError" style="display:none; color:var(--danger); padding:12px; background:rgba(239,68,68,0.1); border-radius:6px;"></div>
+        <div id="patternError"
+          style="display:none; color:var(--danger); padding:12px; background:rgba(239,68,68,0.1); border-radius:6px;">
+        </div>
       </div>
     </div>
   </div>
@@ -1293,14 +1381,16 @@
         <button class="close-btn" id="closePatternStatsModal">×</button>
       </div>
       <div id="patternStatsBody" style="font-size: 12px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;" id="statCards"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;" id="statCards">
+        </div>
         <div style="margin-top: 16px;">
           <h4 style="margin-bottom: 8px;">Failure Distribution</h4>
           <div id="failureDistribution" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
         </div>
         <div style="margin-top: 16px;">
           <h4 style="margin-bottom: 8px;">High-Risk Contracts</h4>
-          <div id="riskyContractsList" style="border: 1px solid var(--border); border-radius: 6px; overflow: hidden;"></div>
+          <div id="riskyContractsList" style="border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+          </div>
         </div>
       </div>
     </div>
@@ -1322,6 +1412,10 @@
   </div>
 
   <script>
+    // Global State for analysis and debugging
+    let currentAnalysis = null;
+    let currentTxHash = '';
+
     // Dark Mode
     const modeToggle = document.getElementById('modeToggle')
     const isDarkMode = localStorage.getItem('darkMode') === 'true'
@@ -1354,12 +1448,12 @@
     document.querySelectorAll('.leaderboard-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         const tabName = tab.dataset.tab
-        
+
         // Update active tab button
         document.querySelectorAll('.leaderboard-tab').forEach(t => {
           t.style.borderBottomColor = t.dataset.tab === tabName ? '#2563eb' : 'transparent'
         })
-        
+
         // Show/hide content
         document.querySelectorAll('.leaderboard-tab-content').forEach(content => {
           content.style.display = 'none'
@@ -1374,7 +1468,7 @@
         // Load statistics
         const statsRes = await fetch(`${API_BASE}/leaderboard/stats`)
         const statsData = await statsRes.json()
-        
+
         if (statsData.ok) {
           const { stats } = statsData
           const statsHtml = `
@@ -1406,7 +1500,7 @@
         // Load risky contracts
         const riskyRes = await fetch(`${API_BASE}/leaderboard/risky?limit=50`)
         const riskyData = await riskyRes.json()
-        
+
         if (riskyData.ok) {
           const riskyHtml = riskyData.leaderboard.map((contract, idx) => {
             const riskColor = {
@@ -1445,14 +1539,14 @@
               </div>
             `
           }).join('')
-          
+
           document.getElementById('riskyContractsList').innerHTML = riskyHtml || '<p style="color: var(--text-muted);">No contracts with failures yet</p>'
         }
 
         // Load failure types
         const failureRes = await fetch(`${API_BASE}/leaderboard/failure-types`)
         const failureData = await failureRes.json()
-        
+
         if (failureData.ok) {
           const failureHtml = failureData.typeStats.map((type, idx) => {
             const barWidth = type.percentage
@@ -1470,19 +1564,19 @@
               </div>
             `
           }).join('')
-          
+
           document.getElementById('failureTypesList').innerHTML = failureHtml
         }
 
         // Load trends
         const trendRes = await fetch(`${API_BASE}/leaderboard/trends?days=30`)
         const trendData = await trendRes.json()
-        
+
         if (trendData.ok) {
           const { trendDirection, trendPercent, recentAverage, olderAverage } = trendData
           const trendColor = trendDirection === 'IMPROVING' ? '#10b981' : trendDirection === 'WORSENING' ? '#ef4444' : '#f59e0b'
           const trendIcon = trendDirection === 'IMPROVING' ? '📉' : trendDirection === 'WORSENING' ? '📈' : '➡️'
-          
+
           const trendHtml = `
             <div style="padding: 12px; background: #f0f9ff; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid ${trendColor};">
               <div style="font-weight: 600; margin-bottom: 8px;">30-Day Trend Analysis</div>
@@ -1502,7 +1596,7 @@
               </div>
             </div>
           `
-          
+
           document.getElementById('trendsList').innerHTML = trendHtml
         }
       } catch (error) {
@@ -1526,6 +1620,9 @@
     const metricsSection = document.getElementById('metricsSection')
     const failureSection = document.getElementById('failureSection')
     const failureCards = document.getElementById('failureCards')
+    const causalitySection = document.getElementById('causalitySection')
+    const bridgeSection = document.getElementById('bridgeSection')
+    const mempoolSection = document.getElementById('mempoolSection')
     const quickActionsSection = document.getElementById('quickActionsSection')
     const gasChart = document.getElementById('gasChart')
     const searchHistory = document.getElementById('searchHistory')
@@ -1536,12 +1633,15 @@
     const gasPriceHistoryDetails = document.getElementById('gasPriceHistoryDetails')
     const traceAnalysisDetails = document.getElementById('traceAnalysisDetails')
 
-    const API_BASE = 'http://localhost:3000'
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:3000'
+      : ''
 
     // ============================================================================
     // WebSocket Client for Shareable Debug Sessions
     // ============================================================================
     let ws = null
+    let wsReconnectAttempts = 0
     let currentSessionId = null
     let sessionProgressBar = null
     let sessionEventsList = null
@@ -1550,13 +1650,14 @@
     function initWebSocket() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const wsUrl = `${protocol}//${window.location.host}`
-      
+
       try {
         ws = new WebSocket(wsUrl)
-        
+
         ws.onopen = () => {
           console.log('✅ WebSocket connected')
-          
+          wsReconnectAttempts = 0
+
           // Check if URL has session parameter
           const params = new URLSearchParams(window.location.search)
           const sessionId = params.get('session')
@@ -1564,21 +1665,25 @@
             subscribeToSession(sessionId)
           }
         }
-        
+
         ws.onmessage = (event) => {
           const message = JSON.parse(event.data)
           handleSessionMessage(message)
         }
-        
+
         ws.onerror = (error) => {
           console.error('❌ WebSocket error:', error)
         }
-        
+
         ws.onclose = () => {
           console.log('⚠️  WebSocket closed')
           ws = null
-          // Attempt reconnect after 3 seconds
-          setTimeout(initWebSocket, 3000)
+          if (wsReconnectAttempts < 3) {
+            wsReconnectAttempts++
+            setTimeout(initWebSocket, 3000 * wsReconnectAttempts)
+          } else {
+            console.log('⚠️ WebSocket: gave up after 3 reconnect attempts')
+          }
         }
       } catch (error) {
         console.error('❌ Failed to create WebSocket:', error)
@@ -1591,15 +1696,15 @@
         console.warn('⚠️  WebSocket not connected')
         return
       }
-      
+
       currentSessionId = sessionId
       ws.send(JSON.stringify({
         type: 'subscribe',
         sessionId
       }))
-      
+
       console.log(`📡 Subscribing to session: ${sessionId}`)
-      
+
       // Show session view UI
       showSessionView(sessionId)
     }
@@ -1607,12 +1712,12 @@
     // Unsubscribe from session
     function unsubscribeFromSession() {
       if (!ws || !currentSessionId) return
-      
+
       ws.send(JSON.stringify({
         type: 'unsubscribe',
         sessionId: currentSessionId
       }))
-      
+
       currentSessionId = null
       hideSessionView()
     }
@@ -1620,34 +1725,34 @@
     // Handle incoming WebSocket messages
     function handleSessionMessage(message) {
       const { type, sessionId } = message
-      
+
       if (sessionId !== currentSessionId) return
-      
+
       switch (type) {
         case 'subscribed':
           handleSessionSubscribed(message.session)
           break
-          
+
         case 'analysis_started':
           handleAnalysisStarted(message)
           break
-          
+
         case 'step_completed':
           handleStepCompleted(message)
           break
-          
+
         case 'analysis_completed':
           handleAnalysisCompleted(message)
           break
-          
+
         case 'analysis_error':
           handleAnalysisError(message)
           break
-          
+
         case 'session_expired':
           handleSessionExpired()
           break
-          
+
         default:
           console.log('📨 Message:', message)
       }
@@ -1657,16 +1762,16 @@
     function handleSessionSubscribed(session) {
       console.log('✅ Session subscribed:', session)
       updateSessionView(session)
-      
+
       showToast('Connected to shared debug session!', 'success')
     }
 
     // Analysis started
     function handleAnalysisStarted(message) {
       const { txHash, totalSteps } = message.data || {}
-      
+
       console.log(`🔍 Analysis started: ${txHash}`)
-      
+
       // Create or show progress bar
       if (sessionProgressBar) {
         sessionProgressBar.innerHTML = `
@@ -1681,7 +1786,7 @@
           </div>
         `
       }
-      
+
       // Add event to list
       addSessionEvent('analysis_started', `🔍 Analysis started for ${txHash}`, 'info')
     }
@@ -1689,9 +1794,9 @@
     // Step completed
     function handleStepCompleted(message) {
       const { step, description, data } = message
-      
+
       console.log(`✅ Step ${step} completed: ${description}`)
-      
+
       // Update progress bar
       if (sessionProgressBar) {
         const progressEl = document.getElementById('sessionProgress')
@@ -1704,7 +1809,7 @@
           stepText.textContent = `Step ${step}/8: ${description}`
         }
       }
-      
+
       // Add event to list
       addSessionEvent('step', `✅ ${description}`, 'success')
     }
@@ -1712,9 +1817,9 @@
     // Analysis completed
     function handleAnalysisCompleted(message) {
       const { txHash, failureReason, responseTimeMs } = message
-      
+
       console.log(`🎉 Analysis completed in ${responseTimeMs}ms`)
-      
+
       // Finalize progress bar
       if (sessionProgressBar) {
         const progressEl = document.getElementById('sessionProgress')
@@ -1725,7 +1830,7 @@
           stepText.textContent = `Analysis complete! Reason: ${failureReason || 'SUCCESS'} (${responseTimeMs}ms)`
         }
       }
-      
+
       // Add event to list
       addSessionEvent('completed', `🎉 Analysis completed - ${failureReason || 'SUCCESS'}`, 'success')
     }
@@ -1733,9 +1838,9 @@
     // Analysis error
     function handleAnalysisError(message) {
       const { error } = message
-      
+
       console.error('❌ Analysis error:', error)
-      
+
       // Update progress bar with error state
       if (sessionProgressBar) {
         const progressEl = document.getElementById('sessionProgress')
@@ -1746,19 +1851,19 @@
           stepText.style.color = 'var(--danger)'
         }
       }
-      
+
       // Add event to list
       addSessionEvent('error', `❌ Analysis error: ${error}`, 'error')
-      
+
       showToast(`Analysis failed: ${error}`, 'error')
     }
 
     // Session expired
     function handleSessionExpired() {
       console.warn('⚠️  Session expired')
-      
+
       addSessionEvent('expired', '⏰ Session expired', 'warning')
-      
+
       showToast('Debug session has expired', 'warning')
       hideSessionView()
     }
@@ -1766,7 +1871,7 @@
     // Add event to session event list
     function addSessionEvent(type, message, level = 'info') {
       if (!sessionEventsList) return
-      
+
       const event = document.createElement('div')
       event.style.cssText = `
         padding: 8px 12px;
@@ -1776,23 +1881,23 @@
         border-left: 3px solid;
         animation: slideIn 0.3s ease;
       `
-      
+
       const colors = {
         info: { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
         success: { bg: '#dcfce7', border: '#10b981', text: '#15803d' },
         warning: { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
         error: { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' }
       }
-      
+
       const color = colors[level] || colors.info
       event.style.background = color.bg
       event.style.borderColor = color.border
       event.style.color = color.text
-      
+
       event.textContent = message
-      
+
       sessionEventsList.insertBefore(event, sessionEventsList.firstChild)
-      
+
       // Keep only last 20 events
       while (sessionEventsList.children.length > 20) {
         sessionEventsList.removeChild(sessionEventsList.lastChild)
@@ -1802,7 +1907,7 @@
     // Show session view
     function showSessionView(sessionId) {
       let container = document.getElementById('sessionViewContainer')
-      
+
       if (!container) {
         container = document.createElement('div')
         container.id = 'sessionViewContainer'
@@ -1821,7 +1926,7 @@
           z-index: 1000;
           overflow: hidden;
         `
-        
+
         container.innerHTML = `
           <div style="padding: 12px 16px; background: linear-gradient(135deg, var(--primary), var(--info)); color: white; display: flex; justify-content: space-between; align-items: center;">
             <div>
@@ -1836,13 +1941,13 @@
             <div id="sessionEventsList" style="max-height: 300px; overflow-y: auto;"></div>
           </div>
         `
-        
+
         document.body.appendChild(container)
       }
-      
+
       sessionProgressBar = document.getElementById('sessionProgressContainer')
       sessionEventsList = document.getElementById('sessionEventsList')
-      
+
       const shareIdEl = document.getElementById('sessionShareId')
       if (shareIdEl) {
         shareIdEl.textContent = `Session: ${sessionId.slice(-8).toUpperCase()}`
@@ -1852,7 +1957,7 @@
     // Update session view with session data
     function updateSessionView(session) {
       if (!sessionEventsList || !session) return
-      
+
       // Replay recent events
       if (session.events && Array.isArray(session.events)) {
         for (const event of session.events.slice(-10)) {
@@ -1923,7 +2028,7 @@
       }
 
       let html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 12px;">'
-      
+
       // L1 Receipt
       if (rawDataObj.l1Receipt) {
         html += '<div style="padding: 12px; background: var(--lighter); border-radius: 6px;">'
@@ -1996,7 +2101,7 @@
       html += `<p><strong>Min baseFeePerGas:</strong> ${gph.min || 'N/A'}</p>`
       html += `<p><strong>Max baseFeePerGas:</strong> ${gph.max || 'N/A'}</p>`
       html += `<p><strong>Blocks Analyzed:</strong> ${(gph.history && gph.history.length) || 0}</p>`
-      
+
       if (gph.history && gph.history.length > 0) {
         html += '<table style="width: 100%; font-size: 10px; border-collapse: collapse; margin-top: 8px;"><thead><tr style="background: var(--lighter);"><th style="padding: 6px; text-align: left; border-bottom: 1px solid var(--border);">Block</th><th style="padding: 6px; text-align: left; border-bottom: 1px solid var(--border);">Base Fee</th></tr></thead><tbody>'
         gph.history.slice(0, 20).forEach((h) => {
@@ -2076,7 +2181,7 @@
       if (!mempoolListEl) return
       const el = document.createElement('div')
       el.className = 'mempool-item'
-      el.innerHTML = `<div style="font-family:monospace; font-size:12px;">${(item.hash||'').slice(0,10)}...${(item.hash||'').slice(-8)}</div><div><span class="mempool-badge pending">PENDING</span></div>`
+      el.innerHTML = `<div style="font-family:monospace; font-size:12px;">${(item.hash || '').slice(0, 10)}...${(item.hash || '').slice(-8)}</div><div><span class="mempool-badge pending">PENDING</span></div>`
       mempoolListEl.prepend(el)
       while (mempoolListEl.childNodes.length > 30) mempoolListEl.removeChild(mempoolListEl.lastChild)
     }
@@ -2148,7 +2253,6 @@
     })
 
     setMempoolIndicator('idle')
-    let currentTxHash = ''
     let searchHistoryList = JSON.parse(localStorage.getItem('searchHistory') || '[]')
 
     // Load Search History
@@ -2160,10 +2264,32 @@
     updateSearchHistory()
 
     // Network Selector
+    const getActiveNetwork = () => document.querySelector('.network-btn.active')?.dataset.network || 'sepolia'
+    const getExplorerUrl = () => {
+      const net = getActiveNetwork()
+      if (net === 'sepolia') return 'https://sepolia.arbiscan.io'
+      if (net === 'nova') return 'https://nova.arbiscan.io'
+      return 'https://arbiscan.io'
+    }
+    const getCustomRpc = () => {
+      if (getActiveNetwork() !== 'custom') return null
+      return {
+        l1Rpc: document.getElementById('customL1Rpc').value,
+        l2Rpc: document.getElementById('customL2Rpc').value
+      }
+    }
+
     document.querySelectorAll('.network-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.network-btn').forEach(b => b.classList.remove('active'))
         btn.classList.add('active')
+
+        const customConfig = document.getElementById('customNetworkConfig')
+        if (btn.dataset.network === 'custom') {
+          customConfig.classList.remove('hidden')
+        } else {
+          customConfig.classList.add('hidden')
+        }
       })
     })
 
@@ -2243,7 +2369,11 @@
 
       try {
         // If we have an active session, pass it to the API
-        const body = { txHash }
+        const body = {
+          txHash,
+          network: getActiveNetwork(),
+          custom: getCustomRpc()
+        }
         if (currentSessionId) {
           body.sessionId = currentSessionId
         }
@@ -2264,7 +2394,16 @@
           updateSearchHistory()
         }
 
+        currentAnalysis = data
         displayResult(data)
+
+        // Scroll to results
+        setTimeout(() => {
+          const flowDiagram = document.getElementById('flowDiagram')
+          if (flowDiagram && !flowDiagram.classList.contains('hidden')) {
+            flowDiagram.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 100)
       } catch (e) {
         showError(e.message)
       } finally {
@@ -2274,6 +2413,35 @@
     }
 
     function displayResult(data) {
+      if (data.foundOn === 'unknown') {
+        statusBadge.className = 'status-badge failed'
+        statusBadge.textContent = '❌ Transaction Not Found on Selected Network'
+
+        const existingAttr = document.getElementById('failureAtLabel')
+        if (existingAttr) existingAttr.remove()
+
+        const msg = document.createElement('div')
+        msg.id = 'failureAtLabel'
+        msg.style.marginTop = '8px'
+        msg.style.fontSize = '12px'
+        msg.style.color = 'var(--text-muted)'
+        msg.textContent = 'Could not locate this transaction hash on the configured L1 or L2 providers. Please ensure you have selected the correct network and that the transaction exists.'
+        statusBadge.parentNode.insertBefore(msg, statusBadge.nextSibling)
+        statusBadge.classList.remove('hidden')
+
+        metricsSection.classList.add('hidden')
+        flowDiagram.classList.add('hidden')
+        timelineSection.classList.add('hidden')
+        gasSection.classList.add('hidden')
+        rawDataSection.classList.add('hidden')
+        failureSection.classList.add('hidden')
+        causalitySection.classList.add('hidden')
+        bridgeSection.classList.add('hidden')
+        mempoolSection.classList.add('hidden')
+        quickActionsSection.classList.add('hidden')
+        return
+      }
+
       // Status Badge
       const status = data.timeline.failureCount > 0 ? 'failed' : 'success'
       statusBadge.className = `status-badge ${status}`
@@ -2282,7 +2450,7 @@
       const existingAttr = document.getElementById('failureAtLabel')
       if (existingAttr) existingAttr.remove()
       // Show precise failure attribution if provided
-      if (data.failureAt || data.failureReason) {
+      if ((data.failureAt || data.failureReason) && data.timeline.failureCount > 0) {
         const attr = document.createElement('div')
         attr.id = 'failureAtLabel'
         attr.style.marginTop = '8px'
@@ -2291,7 +2459,7 @@
         attr.style.color = data.timeline.failureCount > 0 ? 'var(--danger)' : 'var(--text)'
         const at = data.failureAt || 'UNKNOWN'
         const reason = data.failureReason || 'UNKNOWN'
-        attr.textContent = `Failed at: ${at.replace(/_/g,' ')} — Reason: ${reason.replace(/_/g,' ')}`
+        attr.textContent = `Failed at: ${at.replace(/_/g, ' ')} — Reason: ${reason.replace(/_/g, ' ')}`
         statusBadge.parentNode.insertBefore(attr, statusBadge.nextSibling)
         if (data.failureMessage) {
           const msg = document.createElement('div')
@@ -2321,7 +2489,7 @@
       document.getElementById('gasMetric').textContent = gasUsed ? `${gasUsed}` : 'N/A'
 
       // Humanize timestamp: prefer l2Receipt.timestamp, fallback to first timeline action
-      let timestamp = data.rawData.l2Receipt?.timestamp || data.rawData.l2Receipt?.blockTimestamp || null
+      let timestamp = data.rawData.l2Receipt?.timestamp || data.rawData.l2Receipt?.blockTimestamp || data.rawData.l1Receipt?.timestamp || data.rawData.l1Receipt?.blockTimestamp || null
       if (!timestamp) {
         const firstActionTs = (data.timeline.actions && data.timeline.actions[0] && data.timeline.actions[0].timestamp) || null
         timestamp = firstActionTs
@@ -2330,14 +2498,19 @@
       function humanizeTime(ts) {
         if (!ts) return 'N/A'
         // Normalize ms vs seconds
-        if (ts > 1e12) ts = Math.floor(ts / 1000)
-        if (ts > 1e11) {
-          const diff = Math.floor(Date.now() / 1000) - ts
-          if (diff < 10) return 'just now'
-          if (diff < 60) return `${diff}s ago`
-          if (diff < 3600) return `${Math.floor(diff/60)}m ago`
-          if (diff < 86400) return `${Math.floor(diff/3600)}h ago`
-          const d = new Date(ts * 1000)
+        let val = Number(ts)
+        if (val > 1e12) val = Math.floor(val / 1000)
+
+        // Threshold check: 1e8 is around the year 1973. 
+        // Current timestamps are ~1.7e9. 
+        // Previous threshold of 1e11 was for the year 5138+.
+        if (val > 1e8) {
+          const diff = Math.floor(Date.now() / 1000) - val
+          if (diff < 10 && diff >= -10) return 'just now'
+          if (diff >= 10 && diff < 60) return `${diff}s ago`
+          if (diff >= 60 && diff < 3600) return `${Math.floor(diff / 60)}m ago`
+          if (diff >= 3600 && diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+          const d = new Date(val * 1000)
           return d.toLocaleString()
         }
         return 'N/A'
@@ -2363,7 +2536,7 @@
       timeline.innerHTML = data.timeline.actions.map((action, idx) => {
         const detailsCount = Object.keys(action.details).length
         const hasSubSteps = action.substeps && action.substeps.length > 0
-        
+
         return `
           <div class="timeline-node ${action.status}">
             <div class="timeline-dot"></div>
@@ -2375,11 +2548,11 @@
                 </summary>
                 <div class="timeline-details">
                   ${Object.entries(action.details).map(([k, v]) =>
-                    `<div class="timeline-detail-row">
+          `<div class="timeline-detail-row">
                       <span class="timeline-label">${k}:</span>
                       <span class="timeline-value">${v}</span>
                     </div>`
-                  ).join('')}
+        ).join('')}
                   ${hasSubSteps ? `
                     <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(102,126,234,0.2);">
                       <div style="font-weight: 600; font-size: 12px; margin-bottom: 8px;">Sub-steps:</div>
@@ -2422,7 +2595,7 @@
       if (data.timeline.failureClassification.length > 0) {
         failureCards.innerHTML = data.timeline.failureClassification.map(f => {
           const isStylusFailure = f.type.includes('Stylus') || f.type.includes('WASM') || f.type.includes('Panic')
-          
+
           return `
             <div class="failure-card">
               <h4>${isStylusFailure ? '⚙️' : '⚠️'} ${f.type}</h4>
@@ -2459,10 +2632,10 @@
       if (data.crossChainCausality) {
         const causality = data.crossChainCausality
         const causalityCards = document.getElementById('causalityCards')
-        
+
         const chainBadgeColor = causality.chain === 'L1_CAUSED' ? 'var(--danger)' : (causality.chain === 'L2_CAUSED' ? 'var(--warning)' : 'var(--text-muted)')
         const chainBadgeText = causality.chain === 'L1_CAUSED' ? '❌ L1 Parameter Issue' : (causality.chain === 'L2_CAUSED' ? '⚠️ L2 Contract Logic' : '❓ Unknown Cause')
-        
+
         let causalityHTML = `
           <div style="border-left: 4px solid ${chainBadgeColor}; padding: 12px; background: rgba(0,0,0,0.02); border-radius: 6px; margin-bottom: 10px;">
             <div style="font-weight: 700; color: ${chainBadgeColor}; margin-bottom: 8px;">${chainBadgeText}</div>
@@ -2477,7 +2650,7 @@
               <strong>Causality Type:</strong> ${(causality.causalityType || 'UNKNOWN').replace(/_/g, ' ')}
             </div>
         `
-        
+
         if (causality.l1Params) {
           causalityHTML += `
             <div style="background: var(--lighter); padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 11px;">
@@ -2488,7 +2661,7 @@
             </div>
           `
         }
-        
+
         if (causality.l2Impact) {
           causalityHTML += `
             <div style="background: var(--lighter); padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 11px;">
@@ -2499,7 +2672,7 @@
             </div>
           `
         }
-        
+
         if (causality.recommendations && causality.recommendations.length > 0) {
           causalityHTML += `
             <div style="border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px;">
@@ -2525,7 +2698,7 @@
             </div>
           `
         }
-        
+
         // If a causalGraph was returned as well, show a brief step map
         if (data.causalGraph) {
           const g = data.causalGraph
@@ -2600,9 +2773,9 @@
         showToast('Share link copied!', 'success')
       }
       document.getElementById('viewArbiscanBtn').onclick = () => {
-        window.open(`https://arbiscan.io/tx/${currentTxHash}`, '_blank')
+        window.open(`${getExplorerUrl()}/tx/${currentTxHash}`, '_blank')
       }
-      
+
       // Pattern Archive Buttons
       document.getElementById('showSimilarFailuresBtn').onclick = async () => {
         const patternArchiveModal = document.getElementById('patternArchiveModal')
@@ -2610,42 +2783,43 @@
         const patternContent = document.getElementById('patternContent')
         const patternEmpty = document.getElementById('patternEmpty')
         const patternError = document.getElementById('patternError')
-        
+        const similarFailuresList = document.getElementById('similarFailures') // Assuming this exists
+
         patternArchiveModal.classList.add('active')
         patternLoading.style.display = 'block'
         patternContent.style.display = 'none'
         patternEmpty.style.display = 'none'
         patternError.style.display = 'none'
-        
+
         try {
           // Get current analysis to find contract address
           const contractAddress = currentAnalysis?.rawData?.l2Receipt?.to || currentAnalysis?.rawData?.l1Receipt?.to
+          const patternId = currentAnalysis?.result?.primaryFailure?.patternId || currentAnalysis?.result?.failureClassification?.[0]?.patternId
+
           if (!contractAddress) {
-            patternError.textContent = 'No contract address found in analysis'
-            patternError.style.display = 'block'
-            patternLoading.style.display = 'none'
+            similarFailuresList.innerHTML = '<div style="padding:12px; color:var(--text-muted);">No contract address found in current analysis.</div>'
             return
           }
-          
+
           const failureReason = currentAnalysis?.failureReason
           const gasLimit = currentAnalysis?.rawData?.l2Receipt?.gasLimit
-          
+
           const res = await fetch(`${API_BASE}/patterns/similar/${contractAddress}?failureReason=${failureReason}&gasLimit=${gasLimit}`)
           const data = await res.json()
-          
+
           patternLoading.style.display = 'none'
-          
+
           if (!data.ok || data.matchCount === 0) {
             patternEmpty.style.display = 'block'
             return
           }
-          
+
           document.getElementById('patternSummary').textContent = `Found ${data.matchCount} similar failures for this contract`
           document.getElementById('patternInsight').textContent = `These failures likely have the same root cause. The most common fix was: ${data.similar[0]?.failureReason || 'investigate parameters'}`
-          
+
           const similarFailures = document.getElementById('similarFailures')
           similarFailures.innerHTML = ''
-          
+
           data.similar.forEach((failure, idx) => {
             const card = document.createElement('div')
             card.style.cssText = 'padding:12px; background:var(--lighter); border-radius:6px; border-left:4px solid var(--primary);'
@@ -2664,7 +2838,7 @@
             `
             similarFailures.appendChild(card)
           })
-          
+
           patternContent.style.display = 'block'
         } catch (e) {
           console.error('Error fetching similar failures:', e)
@@ -2673,15 +2847,15 @@
           patternLoading.style.display = 'none'
         }
       }
-      
+
       document.getElementById('showArchiveStatsBtn').onclick = async () => {
         const patternStatsModal = document.getElementById('patternStatsModal')
         patternStatsModal.classList.add('active')
-        
+
         try {
           const res = await fetch(`${API_BASE}/patterns/stats`)
           const data = await res.json()
-          
+
           // Populate stat cards
           const statCards = document.getElementById('statCards')
           statCards.innerHTML = `
@@ -2698,7 +2872,7 @@
               <div style="font-size:11px; color:var(--text-muted);">Avg Gas Limit</div>
             </div>
           `
-          
+
           // Failure distribution
           const failureDistribution = document.getElementById('failureDistribution')
           const breakdown = data.failureBreakdown
@@ -2740,11 +2914,11 @@
               </div>
             </div>
           `
-          
+
           // Get risky contracts
           const riskyRes = await fetch(`${API_BASE}/patterns/risky?limit=10`)
           const riskyData = await riskyRes.json()
-          
+
           const riskyList = document.getElementById('riskyContractsList')
           if (riskyData.contracts && riskyData.contracts.length > 0) {
             riskyList.innerHTML = riskyData.contracts.map((c, idx) => `
@@ -2766,7 +2940,7 @@
           showToast(`Error: ${e.message}`, 'error')
         }
       }
-      
+
       // Pattern Archive Modal Close Buttons
       document.getElementById('closePatternModal').onclick = () => {
         document.getElementById('patternArchiveModal').classList.remove('active')
@@ -2774,21 +2948,21 @@
       document.getElementById('closePatternStatsModal').onclick = () => {
         document.getElementById('patternStatsModal').classList.remove('active')
       }
-      
+
       // Pre-Submission Validator
       document.getElementById('validateParamsBtn').onclick = async () => {
         const gasLimit = document.getElementById('validatorGasLimit').value
         const maxFee = document.getElementById('validatorMaxFee').value
         const submissionCost = document.getElementById('validatorSubmissionCost').value
         const resultDiv = document.getElementById('validationResult')
-        
+
         if (!gasLimit || !maxFee) {
           resultDiv.innerHTML = '<div style="color:var(--danger); font-size:11px;">Please fill in Gas Limit and Max Fee</div>'
           return
         }
-        
+
         resultDiv.innerHTML = '<div style="color:var(--primary); font-size:11px;">🔄 Validating...</div>'
-        
+
         try {
           const res = await fetch(`${API_BASE}/validate/pre-submit`, {
             method: 'POST',
@@ -2800,21 +2974,21 @@
               callDataLength: 0
             })
           })
-          
+
           const data = await res.json()
           const v = data.validation
-          
+
           // Determine color based on probability
-          const colorMap = v.successProbability >= 80 ? 'var(--success)' 
-                         : v.successProbability >= 60 ? 'var(--warning)'
-                         : 'var(--danger)'
-          
+          const colorMap = v.successProbability >= 80 ? 'var(--success)'
+            : v.successProbability >= 60 ? 'var(--warning)'
+              : 'var(--danger)'
+
           let html = `
             <div style="margin-top: 8px; padding: 8px; background: var(--lighter); border-radius: 4px; border-left: 4px solid ${colorMap};">
               <div style="font-weight: 600; font-size: 12px; color: ${colorMap};">${v.successProbability}% Success Probability</div>
               <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">${v.recommendation}</div>
           `
-          
+
           // Show critical risks
           const criticalRisks = v.risks.filter(r => r.severity === 'critical')
           if (criticalRisks.length > 0) {
@@ -2824,7 +2998,7 @@
             })
             html += `</div>`
           }
-          
+
           // Show suggestions
           if (v.suggestions && v.suggestions.length > 0) {
             html += `<div style="margin-top: 6px; padding: 4px; background: rgba(59, 130, 246, 0.1); border-radius: 2px; border-left: 2px solid var(--info); font-size: 10px; color: var(--info);"><strong>💡 Suggestions:</strong><br/>`
@@ -2833,14 +3007,14 @@
             })
             html += `</div>`
           }
-          
+
           html += `</div>`
           resultDiv.innerHTML = html
         } catch (e) {
           resultDiv.innerHTML = `<div style="color:var(--danger); font-size:10px;">Error: ${e.message}</div>`
         }
       }
-      
+
       // Decode modal flow
       const decodeBtn = document.getElementById('decodeCalldataBtn')
       const decodeModal = document.getElementById('decodeModal')
@@ -3037,14 +3211,33 @@
         retryableEmpty.style.display = 'none'
         retryableLoading.style.display = 'block'
         try {
-          const res = await fetch(`${API_BASE}/retryable/search?tx=${encodeURIComponent(currentTxHash)}`)
-          const json = await res.json()
+          const net = getActiveNetwork()
+          const custom = getCustomRpc()
+          let url = `${API_BASE}/retryable/search?tx=${encodeURIComponent(currentTxHash)}&network=${net}`
+          if (custom) url += `&custom=${encodeURIComponent(JSON.stringify(custom))}`
+
+          const res = await fetch(url)
+          let json = await res.json()
+
+          // Fallback if search returns nothing but we have it in currentAnalysis
+          if (json && json.ok && (!json.tickets || json.tickets.length === 0) && currentAnalysis?.rawData?.retryableTickets?.length > 0) {
+            json = {
+              ok: true,
+              tickets: currentAnalysis.rawData.retryableTickets.map(t => ({
+                ...t,
+                ticket_id: t.ticketId || t.ticket_id, // Normalize
+                lifecycle: t.lifecycle || { status: 'DETECTED' }
+              }))
+            }
+          }
+
           retryableLoading.style.display = 'none'
           if (json && json.ok && Array.isArray(json.tickets) && json.tickets.length > 0) {
             retryableContent.style.display = 'block'
+            const expUrl = getExplorerUrl()
             retryableContent.innerHTML = json.tickets.map((t, idx) => {
               const lc = t.lifecycle || {}
-              const statusColor = lc.status === 'EXPIRED' ? 'var(--danger)' : (lc.status === 'REDEEMED' ? 'var(--success)' : 'var(--warning)')
+              const statusColor = lc.status === 'EXPIRED' ? 'var(--danger)' : (lc.status === 'REDEEMED' || lc.status === 'AUTO_REDEEMED' ? 'var(--success)' : 'var(--warning)')
               return `
                 <div class="panel" style="padding:16px; margin-bottom:16px; border-left:4px solid ${statusColor};">
                   <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px;">
@@ -3055,8 +3248,8 @@
                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; font-size:12px;">
                     <div><strong>Ticket ID:</strong> <code style="font-size:10px;">${t.ticket_id}</code></div>
                     <div><strong>Created:</strong> ${formatDate(lc.createdAt)}</div>
-                    <div><strong>To Address:</strong> <strong>${t.to_address}</strong></div>
-                    <div><strong>Creator:</strong> <strong>${t.creator}</strong></div>
+                    <div><strong>To Address:</strong> <strong>${t.to_address || t.to}</strong></div>
+                    <div><strong>Creator:</strong> <strong>${t.creator || t.from}</strong></div>
                   </div>
 
                   <div style="background:rgba(37,99,235,0.05); border-left:2px solid var(--primary); padding:10px; border-radius:4px; margin-bottom:12px; font-size:12px;">
@@ -3084,7 +3277,7 @@
                         <div style="flex:1;">
                           <strong>Auto-Redeem Attempt</strong><br/>
                           <span style="color:var(--text-muted);">Within 1 hour of creation</span><br/>
-                          <span style="font-size:10px; color:${lc.autoRedeemSucceeded ? 'var(--success)' : 'var(--warning)'};">${lc.educationalNotes?.autoRedeem}</span>
+                          <span style="font-size:10px; color:${lc.autoRedeemSucceeded ? 'var(--success)' : 'var(--warning)'};">${lc.educationalNotes?.autoRedeem || ''}</span>
                         </div>
                         <div style="text-align:right; font-size:10px; color:var(--text-muted);">Deadline: ${formatCountdown(lc.autoRedeemDeadline)}</div>
                       </div>
@@ -3094,7 +3287,7 @@
                         <div style="flex:1;">
                           <strong>Manual Redeem Window</strong><br/>
                           <span style="color:var(--text-muted);">7 days from creation (anyone can call)</span><br/>
-                          <span style="font-size:10px; color:${lc.manualRedeemSucceeded ? 'var(--success)' : (lc.manualRedeemExpired ? 'var(--danger)' : 'var(--warning)}')};">${lc.educationalNotes?.manualRedeem}</span>
+                          <span style="font-size:10px; color:${lc.manualRedeemSucceeded ? 'var(--success)' : (lc.manualRedeemExpired ? 'var(--danger)' : 'var(--warning)')};">${lc.educationalNotes?.manualRedeem || ''}</span>
                         </div>
                         <div style="text-align:right; font-size:10px; color:var(--text-muted);">Deadline: ${formatCountdown(lc.manualRedeemDeadline)}</div>
                       </div>
@@ -3106,16 +3299,6 @@
                           <span style="color:var(--text-muted);">${lc.expiryWarning ? lc.expiryWarning : 'Ticket remains claimable within 7-day window'}</span>
                         </div>
                       </div>
-
-                      ${lc.lifetimeExtensions > 0 ? `
-                      <div style="display:flex; align-items:center; gap:8px; padding:8px; background:var(--lighter); border-radius:4px;">
-                        <span style="font-weight:700; color:var(--info);">🔄</span>
-                        <div style="flex:1;">
-                          <strong>Lifetime Extended ${lc.lifetimeExtensions} time(s)</strong><br/>
-                          <span style="color:var(--text-muted);">Redeem window was extended</span>
-                        </div>
-                      </div>
-                      ` : ''}
                     </div>
                   </div>
 
@@ -3129,10 +3312,10 @@
                       • Status: <strong>${lc.status}</strong> ${lc.whoCanRedeem ? `— Who can redeem: ${lc.whoCanRedeem}` : ''}
                     </div>
                   </div>
-
+                  
                   <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary btn-sm" onclick="window.open('https://arbiscan.io/address/${t.to_address}','_blank')" style="flex:1;">📍 View To Address</button>
-                    <button class="btn btn-secondary btn-sm" onclick="window.open('https://arbiscan.io/tx/${t.l1_tx_hash}','_blank')" style="flex:1;">📄 View L1 TX</button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.open('${expUrl}/address/${t.to_address || t.to}','_blank')" style="flex:1;">📍 View To Address</button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.open('${expUrl}/tx/${t.l1_tx_hash || t.transactionHash}','_blank')" style="flex:1;">📄 View L1 TX</button>
                   </div>
                 </div>
               `
@@ -3162,7 +3345,16 @@
 
     // Deep Link Support
     const params = new URLSearchParams(window.location.search)
-    if (params.has('tx')) {
+    if (!params.has('tx')) {
+      // Ensure clean state on fresh page load
+      ;['statusBadge', 'metricsSection', 'flowDiagram', 'timelineSection', 'gasSection',
+        'rawDataSection', 'failureSection', 'causalitySection', 'bridgeSection',
+        'mempoolSection', 'quickActionsSection'].forEach(id => {
+          const el = document.getElementById(id)
+          if (el && !el.classList.contains('hidden')) el.classList.add('hidden')
+        })
+      txInput.value = ''
+    } else {
       txInput.value = params.get('tx')
       analyzeTx()
     }
@@ -3203,7 +3395,7 @@
                 failures: data.timeline.failureClassification.length
               })
             }
-          } catch (e) {}
+          } catch (e) { }
           batchProgress.innerHTML = `Processed ${i + 1}/${hashes.length}`
         }
 
@@ -3258,7 +3450,7 @@
         if (data.results.length > 0) {
           return data.results[0].text_signature
         }
-      } catch (e) {}
+      } catch (e) { }
       return `Unknown function (${selector})`
     }
 
@@ -3270,7 +3462,7 @@
         'Across': 'https://across.to',
         'dYdX': 'https://dydx.exchange'
       }
-      
+
       const bridgeData = document.getElementById('bridgeData')
       bridgeData.innerHTML = `
         <div style="font-size: 11px;">
@@ -3298,8 +3490,8 @@
             time: 'just now'
           }
           pendingTxs.unshift(mockTx)
-          
-              mempoolList.innerHTML = pendingTxs.slice(0, 5).map((tx, i) => `
+
+          mempoolList.innerHTML = pendingTxs.slice(0, 5).map((tx, i) => `
                 <div class="mempool-item" tabindex="0">
                   <div style="display:flex; gap:8px; align-items:center;">
                     <strong style="font-family: monospace;">${tx.hash.slice(0, 10)}...</strong>
@@ -3333,18 +3525,18 @@
             item.tabIndex = 0
             item.innerHTML = `
               <div style="display:flex; gap:8px; align-items:center;">
-                <strong style="font-family: monospace;">${obj.hash.slice(0,10)}...</strong>
+                <strong style="font-family: monospace;">${obj.hash.slice(0, 10)}...</strong>
                 <div style="color: var(--text-muted); font-size: 11px;">${obj.gasPrice || ''}</div>
               </div>
               <div style="display:flex; gap:8px; align-items:center;">
-                <span class="mempool-badge ${obj.status === 'pending' ? 'pending' : ''}" title="${iso}">${(obj.status||'PENDING').toUpperCase()}</span>
+                <span class="mempool-badge ${obj.status === 'pending' ? 'pending' : ''}" title="${iso}">${(obj.status || 'PENDING').toUpperCase()}</span>
               </div>
             `
             mempoolList.prepend(item)
             // limit
             while (mempoolList.children.length > 10) mempoolList.removeChild(mempoolList.lastChild)
             document.getElementById('mempoolSection').classList.remove('hidden')
-          } catch (e) {}
+          } catch (e) { }
         }
         es.onerror = () => {
           // fallback to simulation if stream errors
@@ -3358,10 +3550,12 @@
 
     // Enhanced displayResult with bridge and mempool
     const originalDisplayResult = displayResult
-    displayResult = function(data) {
+    displayResult = function (data) {
       originalDisplayResult(data)
-      checkBridgeActivity(currentTxHash)
-      startMempoolMonitoring()
+      if (data.foundOn !== 'unknown') {
+        checkBridgeActivity(currentTxHash)
+        startMempoolMonitoring()
+      }
     }
 
     // Render a simple SVG causal graph inside a container
@@ -3391,18 +3585,18 @@
           </defs>
           <rect x="${x1}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="#fff" stroke="#e5e7eb" />
           <text x="${x1 + 12}" y="${y + 18}" font-size="12" fill="#0f172a" font-weight="700">L1 Submission</text>
-          <text x="${x1 + 12}" y="${y + 36}" font-size="11" fill="#475569">${(l1.txHash || '').slice(0,12)}${l1.txHash ? '...' : ''}</text>
+          <text x="${x1 + 12}" y="${y + 36}" font-size="11" fill="#475569">${(l1.txHash || '').slice(0, 12)}${l1.txHash ? '...' : ''}</text>
 
           <rect x="${x2}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="#fff" stroke="#e5e7eb" />
           <text x="${x2 + 12}" y="${y + 18}" font-size="12" fill="#0f172a" font-weight="700">Retryable Ticket</text>
-          <text x="${x2 + 12}" y="${y + 36}" font-size="11" fill="#475569">${(r.ticketId || '').slice(0,12)}${r.ticketId ? '...' : ''}</text>
+          <text x="${x2 + 12}" y="${y + 36}" font-size="11" fill="#475569">${(r.ticketId || '').slice(0, 12)}${r.ticketId ? '...' : ''}</text>
 
           <rect x="${x3}" y="${y}" width="${nodeW}" height="${nodeH}" rx="6" fill="#fff" stroke="#e5e7eb" />
           <text x="${x3 + 12}" y="${y + 18}" font-size="12" fill="#0f172a" font-weight="700">L2 Execution</text>
-          <text x="${x3 + 12}" y="${y + 36}" font-size="11" fill="#475569">${(l2.txHash || '').slice(0,12)}${l2.txHash ? '...' : ''}</text>
+          <text x="${x3 + 12}" y="${y + 36}" font-size="11" fill="#475569">${(l2.txHash || '').slice(0, 12)}${l2.txHash ? '...' : ''}</text>
 
-          <line x1="${x1 + nodeW}" y1="${y + nodeH/2}" x2="${x2}" y2="${y + nodeH/2}" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arrow)" />
-          <line x1="${x2 + nodeW}" y1="${y + nodeH/2}" x2="${x3}" y2="${y + nodeH/2}" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arrow)" />
+          <line x1="${x1 + nodeW}" y1="${y + nodeH / 2}" x2="${x2}" y2="${y + nodeH / 2}" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arrow)" />
+          <line x1="${x2 + nodeW}" y1="${y + nodeH / 2}" x2="${x3}" y2="${y + nodeH / 2}" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arrow)" />
         </svg>
       `
 
@@ -3413,8 +3607,9 @@
         btns.forEach(b => {
           b.style.cursor = 'pointer'
         })
-      } catch (e) {}
+      } catch (e) { }
     }
   </script>
 </body>
+
 </html>

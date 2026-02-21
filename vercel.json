@@ -1,10 +1,28 @@
 {
   "version": 2,
-  "name": "arbitrace-frontend",
+  "name": "arbitrace",
   "builds": [
-    { "src": "public/**/*", "use": "@vercel/static" }
+    {
+      "src": "src/server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
+    }
   ],
-  "routes": [
-    { "src": "/(.*)", "dest": "/public/$1" }
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/src/server.js"
+    },
+    {
+      "source": "/analyze",
+      "destination": "/src/server.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/$1"
+    }
   ]
 }

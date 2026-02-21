@@ -28,7 +28,7 @@ export function normalizeTrace(detection, retryables, l2TraceInfo) {
       action: 'L1_TX_SUBMITTED',
       status: detection.l1Receipt.status === 1 ? 'confirmed' : 'failed',
       details: {
-        txHash: detection.l1Receipt.transactionHash,
+        txHash: detection.l1Receipt.hash || detection.l1Receipt.transactionHash,
         blockNumber: detection.l1Receipt.blockNumber,
         gasUsed: detection.l1Receipt.gasUsed ? detection.l1Receipt.gasUsed.toString() : '0'
       }
@@ -75,7 +75,7 @@ export function normalizeTrace(detection, retryables, l2TraceInfo) {
       action: 'L2_EXECUTION',
       status: detection.l2Receipt.status === 1 ? 'confirmed' : 'failed',
       details: {
-        txHash: detection.l2Receipt.transactionHash,
+        txHash: detection.l2Receipt.hash || detection.l2Receipt.transactionHash,
         blockNumber: detection.l2Receipt.blockNumber,
         gasUsed: detection.l2Receipt.gasUsed ? detection.l2Receipt.gasUsed.toString() : '0',
         to: detection.l2Receipt.to,

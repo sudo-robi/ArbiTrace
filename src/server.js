@@ -10,7 +10,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { createRequire } from 'module'
-import { findTxOnProviders, fetchL1Logs, findRetryableCreationLogs, findL2TransactionFromRetryable, fetchL2TraceInfo, getProviders, findRetryableLifecycle, debugTraceTransaction, findRetryableLifecycleViaIndexer, computeL2BaseFeeAverage, fetchL2GasPriceHistory, extractMemoryStorageAccess } from './arbitrum.js'
+import { findTxOnProviders, fetchL1Logs, findRetryableCreationLogs, findL2TransactionFromRetryable, fetchL2TraceInfo, getProviders, findRetryableLifecycle, debugTraceTransaction, findRetryableLifecycleViaIndexer, computeL2BaseFeeAverage, fetchL2GasPriceHistory, extractMemoryStorageAccess, findParentL1ForL2Tx } from './arbitrum.js'
 import { analyzeCrossChainCausality, computeCausalGraph } from './causalityAnalyzer.js'
 import { resolveSelector } from './abiResolver.js'
 import abiCache from './abiCache.js'
@@ -28,10 +28,9 @@ import { initSessionManager, createSession, getSession, subscribeToSession, unsu
 import auth from './auth.js'
 import { initLeaderboardAnalytics, getContractRiskScore, getTopRiskyContracts as getTopRiskyContractsAnalytics, getFailureTypeStats, getTrendAnalysis, getSeverityDistribution, getLeaderboardStats } from './leaderboardAnalytics.js'
 import { initGasEstimation, estimateOptimalGas, getGasOptimizationTips, buildMLFeatureMatrix, detectContractType, getContractGasHistory, calculateGasStatistics, analyzeFailurePatterns } from './smartGasEstimation.js'
+import { initOnchainIntegration, mountOnchainRoutes } from './onchainIntegration.js';
 
-import { initOnchainIntegration, mountOnchainRoutes } from './src/onchainIntegration.js';
-const listener = await initOnchainIntegration(indexerInstance, db);
-mountOnchainRoutes(app, listener);
+// onchainIntegration initialization moved below app definition
 
 dotenv.config()
 
@@ -40,6 +39,10 @@ const __dirname = path.dirname(__filename)
 const require = createRequire(import.meta.url)
 
 const app = express()
+
+// Initialize onchain integration
+const listener = await initOnchainIntegration(indexer, null);
+mountOnchainRoutes(app, listener);
 
 // If running behind a proxy/load balancer, trust the proxy headers
 if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1)
@@ -52,12 +55,14 @@ app.use(helmet({ contentSecurityPolicy: false }))
 const rawCors = process.env.CORS_ORIGINS || ''
 const allowedOrigins = rawCors.split(',').map(s => s.trim()).filter(Boolean)
 if (allowedOrigins.length > 0) {
-  app.use(cors({ origin: (origin, cb) => {
-    // allow requests with no origin (e.g. mobile apps, curl)
-    if (!origin) return cb(null, true)
-    if (allowedOrigins.includes(origin)) return cb(null, true)
-    return cb(new Error('Not allowed by CORS'))
-  }}))
+  app.use(cors({
+    origin: (origin, cb) => {
+      // allow requests with no origin (e.g. mobile apps, curl)
+      if (!origin) return cb(null, true)
+      if (allowedOrigins.includes(origin)) return cb(null, true)
+      return cb(new Error('Not allowed by CORS'))
+    }
+  }))
 } else {
   // no explicit allow list configured — preserve permissive default
   app.use(cors())
@@ -249,7 +254,7 @@ async function classifyFailureDetailed(detection, retryable, l2TraceInfo, retrya
       try {
         const maxFeePerGas = BigInt(retryable.maxFeePerGas || '0')
         if (maxFeePerGas > 0n) {
-            try {
+          try {
             // Use recent average base fee instead of a single-block snapshot
             const t_avg = Date.now()
             const avgBaseFee = await computeL2BaseFeeAverage(10)
@@ -266,8 +271,8 @@ async function classifyFailureDetailed(detection, retryable, l2TraceInfo, retrya
             // ignore provider errors
           }
         }
-      } catch (e) {}
-    } catch (e) {}
+      } catch (e) { }
+    } catch (e) { }
   }
 
   // If there's lifecycle info for the retryable ticket, use it
@@ -313,15 +318,18 @@ async function classifyFailureDetailed(detection, retryable, l2TraceInfo, retrya
     }
   }
 
-    // L2 receipt indicates execution failure
-  if (detection.l2Receipt && detection.l2Receipt.status === 0) {
-    result.failureAt = 'L2_EXECUTION'
-    hints.push({ type: 'L2_REVERT', message: 'L2 execution reverted. Check contract logic or calldata.', severity: 'critical' })
+  // L2 receipt investigation
+  if (detection.l2Receipt) {
+    if (detection.l2Receipt.status === 0) {
+      result.failureAt = 'L2_EXECUTION'
+      hints.push({ type: 'L2_REVERT', message: 'L2 execution reverted. Check contract logic or calldata.', severity: 'critical' })
+    }
 
     // Prefer debug trace output when available to determine exact cause
     try {
       const t_debug = Date.now()
-      debugTrace = await debugTraceTransaction(detection.l2Receipt.transactionHash)
+      const l2TxHash = detection.l2Receipt.hash || detection.l2Receipt.transactionHash
+      debugTrace = await debugTraceTransaction(l2TxHash)
       if (t_debug && timings) timings.debugTraceTransactionMs = Date.now() - t_debug
       if (debugTrace) {
         // If RPC returned an error field
@@ -336,10 +344,11 @@ async function classifyFailureDetailed(detection, retryable, l2TraceInfo, retrya
         const raw = debugTrace.returnValue || (debugTrace.result && debugTrace.result.returnValue) || debugTrace.output || (debugTrace.result && debugTrace.result.output) || null
         if (raw && String(raw).toLowerCase().includes('08c379a0')) {
           result.failureReason = 'LOGIC_REVERT'
-          hints.push({ type: 'REVERT_RAW', message: `Revert data present (hex trimmed): ${String(raw).slice(0,200)}`, severity: 'critical' })
+          hints.push({ type: 'REVERT_RAW', message: `Revert data present (hex trimmed): ${String(raw).slice(0, 200)}`, severity: 'critical' })
           try {
             // Check cache first
-            const cacheKey = 'revert:' + (detection.l2Receipt && detection.l2Receipt.transactionHash ? detection.l2Receipt.transactionHash : '')
+            const txHashToUse = detection.l2Receipt.hash || detection.l2Receipt.transactionHash
+            const cacheKey = 'revert:' + (txHashToUse ? txHashToUse : '')
             const cached = cacheGet(cacheKey)
             if (cached) {
               result.failureMessage = cached
@@ -357,7 +366,7 @@ async function classifyFailureDetailed(detection, retryable, l2TraceInfo, retrya
               if (dec && dec[0]) {
                 result.failureMessage = String(dec[0])
                 hints.push({ type: 'REVERT_MESSAGE', message: result.failureMessage, severity: 'critical' })
-                try { cacheSet(cacheKey, result.failureMessage, 1000 * 60 * 60) } catch (e) {}
+                try { cacheSet(cacheKey, result.failureMessage, 1000 * 60 * 60) } catch (e) { }
               }
             }
           } catch (e) {
@@ -382,7 +391,7 @@ async function classifyFailureDetailed(detection, retryable, l2TraceInfo, retrya
         } else {
           try {
             const { l2Provider } = getProviders()
-            const tx = await l2Provider.getTransaction(detection.l2Receipt.transactionHash)
+            const tx = await l2Provider.getTransaction(detection.l2Receipt.hash || detection.l2Receipt.transactionHash)
             if (tx) {
               try {
                 await l2Provider.call({ to: tx.to, data: tx.data })
@@ -392,9 +401,9 @@ async function classifyFailureDetailed(detection, retryable, l2TraceInfo, retrya
                 else if (msg.toLowerCase().includes('revert')) result.failureReason = 'LOGIC_REVERT'
               }
             }
-          } catch (e) {}
+          } catch (e) { }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 
@@ -411,7 +420,8 @@ async function classifyFailureDetailed(detection, retryable, l2TraceInfo, retrya
 
 app.post('/analyze', async (req, res) => {
   try {
-    const { txHash, sessionId } = req.body
+    const { txHash, sessionId, network, custom } = req.body
+    const networkId = network || 'sepolia'
     if (!txHash) return res.status(400).json({ error: 'txHash required' })
 
     const start = Date.now()
@@ -433,7 +443,26 @@ app.post('/analyze', async (req, res) => {
 
     // Step 1: Detect L1 vs L2
     const t_find = Date.now()
-    const detection = await findTxOnProviders(txHash)
+    const detection = await findTxOnProviders(txHash, networkId, custom)
+
+    // L1 Backtracing: If found on L2 but NOT on L1, it might be a redemption.
+    // Try to find the originating L1 transaction to populate L1 logs/receipt.
+    if (detection.l2Receipt && !detection.l1Receipt) {
+      try {
+        const parentL1Hash = await findParentL1ForL2Tx(detection.l2Receipt, networkId, custom)
+        if (parentL1Hash) {
+          const { l1Provider } = getProviders(networkId, custom)
+          const parentL1Receipt = await l1Provider.getTransactionReceipt(parentL1Hash)
+          if (parentL1Receipt) {
+            detection.l1Receipt = parentL1Receipt
+            detection.foundOn = 'both'
+            console.log(`L1 Backtrace successful: Found parent L1 tx ${parentL1Hash} for L2 redemption ${txHash}`)
+          }
+        }
+      } catch (e) {
+        console.warn('L1 Backtrace failed:', e.message)
+      }
+    }
     rpcTimings.findTxOnProvidersMs = Date.now() - t_find
 
     if (sessionId) {
@@ -448,7 +477,7 @@ app.post('/analyze', async (req, res) => {
 
     // Step 2-4: Parallelize independent RPC calls with 5-second timeout per call
     const t_parallel = Date.now()
-    
+
     // Setup parallel promises with timeout guards
     const timeoutPromise = (promise, ms, label) => Promise.race([
       promise,
@@ -461,17 +490,17 @@ app.post('/analyze', async (req, res) => {
     const [l1Logs, l2TraceInfoResult, gasPriceHistoryResult] = await Promise.all([
       timeoutPromise(
         detection.l1Receipt ? fetchL1Logs(detection.l1Receipt) : Promise.resolve(null),
-        5000,
+        10000,
         'fetchL1Logs'
       ),
       timeoutPromise(
-        detection.l2Receipt ? fetchL2TraceInfo(detection.l2Receipt.transactionHash) : Promise.resolve(null),
-        5000,
+        detection.l2Receipt ? fetchL2TraceInfo(detection.l2Receipt.hash || detection.l2Receipt.transactionHash, networkId, custom) : Promise.resolve(null),
+        10000,
         'fetchL2TraceInfo'
       ),
       timeoutPromise(
-        fetchL2GasPriceHistory(50), // Reduced from 100 to 50 blocks for speed
-        3000,
+        fetchL2GasPriceHistory(20, networkId, custom), // Reduced to 20 blocks for maximum speed and reliability
+        10000,
         'fetchL2GasPriceHistory'
       )
     ])
@@ -495,11 +524,11 @@ app.post('/analyze', async (req, res) => {
     let l2Search = null
     let retryableLifecycleNew = null
     const retryableForParallel = retryables[0] || null
-    
+
     if (retryableForParallel) {
       const [l2SearchResult, lifecycleResult] = await Promise.all([
         timeoutPromise(
-          findL2TransactionFromRetryable(retryableForParallel, 100),
+          findL2TransactionFromRetryable(retryableForParallel, 100, networkId, custom),
           3000,
           'findL2TransactionFromRetryable'
         ),
@@ -510,7 +539,7 @@ app.post('/analyze', async (req, res) => {
               if (indexerResult.ok && indexerResult.tickets && indexerResult.tickets.length > 0) {
                 return { ok: true, events: [], indexerTickets: indexerResult.tickets }
               }
-              return await findRetryableLifecycle(retryableForParallel.ticketId, 400)
+              return await findRetryableLifecycle(retryableForParallel.ticketId, 400, networkId, custom)
             } catch (e) {
               return null
             }
@@ -553,7 +582,7 @@ app.post('/analyze', async (req, res) => {
     } : null
     const stylusMarkers = detectStylusExecution(l2ReceiptForStylusDetection, l1Logs)
     const stylusContext = extractWasmExecutionContext(l2ReceiptForStylusDetection, l1Logs)
-    
+
     if (stylusMarkers && stylusMarkers.isWasmContract) {
       const stylusFails = classifyStylusFailure(stylusMarkers, null, l2ReceiptForStylusDetection)
       failureHints.push(...stylusFails)
@@ -561,7 +590,7 @@ app.post('/analyze', async (req, res) => {
 
     // Step 6: Normalize trace into action graph
     const actionGraph = normalizeTrace(detection, retryables, l2TraceInfo)
-    
+
     // Add Stylus node if applicable
     if (stylusMarkers && stylusMarkers.isWasmContract) {
       const stylusNode = getStylusTimelineNode(stylusMarkers, stylusContext)
@@ -597,43 +626,43 @@ app.post('/analyze', async (req, res) => {
         console.error('Causality analysis error:', e.message)
       }
     }
-      // Return analysis
-      // Enrich receipts with block timestamps (parallelized with timeout)
-      try {
-        const { l1Provider, l2Provider } = getProviders()
-        await Promise.all([
-          (async () => {
-            if (detection.l1Receipt && detection.l1Receipt.blockNumber) {
-              try {
-                const b1 = await timeoutPromise(
-                  l1Provider.getBlock(detection.l1Receipt.blockNumber),
-                  2000,
-                  'L1 block fetch'
-                )
-                detection.l1Receipt.blockTimestamp = b1 ? b1.timestamp : null
-              } catch (e) {
-                // ignore
-              }
+    // Return analysis
+    // Enrich receipts with block timestamps (parallelized with timeout)
+    try {
+      const { l1Provider, l2Provider } = getProviders()
+      await Promise.all([
+        (async () => {
+          if (detection.l1Receipt && detection.l1Receipt.blockNumber) {
+            try {
+              const b1 = await timeoutPromise(
+                l1Provider.getBlock(detection.l1Receipt.blockNumber),
+                2000,
+                'L1 block fetch'
+              )
+              detection.l1Receipt.blockTimestamp = b1 ? b1.timestamp : null
+            } catch (e) {
+              // ignore
             }
-          })(),
-          (async () => {
-            if (detection.l2Receipt && detection.l2Receipt.blockNumber) {
-              try {
-                const b2 = await timeoutPromise(
-                  l2Provider.getBlock(detection.l2Receipt.blockNumber),
-                  2000,
-                  'L2 block fetch'
-                )
-                detection.l2Receipt.blockTimestamp = b2 ? b2.timestamp : null
-              } catch (e) {
-                // ignore
-              }
+          }
+        })(),
+        (async () => {
+          if (detection.l2Receipt && detection.l2Receipt.blockNumber) {
+            try {
+              const b2 = await timeoutPromise(
+                l2Provider.getBlock(detection.l2Receipt.blockNumber),
+                2000,
+                'L2 block fetch'
+              )
+              detection.l2Receipt.blockTimestamp = b2 ? b2.timestamp : null
+            } catch (e) {
+              // ignore
             }
-          })()
-        ])
-      } catch (e) {
-        // providers not available or error fetching blocks - continue
-      }
+          }
+        })()
+      ])
+    } catch (e) {
+      // providers not available or error fetching blocks - continue
+    }
 
     const responseData = {
       txHash: detection.txHash,
@@ -649,7 +678,7 @@ app.post('/analyze', async (req, res) => {
       rawData: {
         // Full L1 Receipt (unfiltered)
         l1Receipt: detection.l1Receipt ? {
-          transactionHash: detection.l1Receipt.transactionHash,
+          transactionHash: detection.l1Receipt.hash || detection.l1Receipt.transactionHash,
           status: detection.l1Receipt.status,
           blockNumber: detection.l1Receipt.blockNumber,
           blockTimestamp: detection.l1Receipt.blockTimestamp || null,
@@ -668,7 +697,7 @@ app.post('/analyze', async (req, res) => {
         } : null,
         // Full L2 Receipt (unfiltered)
         l2Receipt: detection.l2Receipt ? {
-          transactionHash: detection.l2Receipt.transactionHash,
+          transactionHash: detection.l2Receipt.hash || detection.l2Receipt.transactionHash,
           status: detection.l2Receipt.status,
           blockNumber: detection.l2Receipt.blockNumber,
           blockTimestamp: detection.l2Receipt.blockTimestamp || null,
@@ -716,12 +745,12 @@ app.post('/analyze', async (req, res) => {
     }
     // attach timing info so callers can assert <10s requirement
     responseData.responseTimeMs = Date.now() - start
-    
+
     // Record this analysis in pattern archive (async, don't block response)
     try {
       recordFailure({
         l1TxHashPrefix: detection.txHash ? String(detection.txHash).slice(0, 10) : null,
-        l2TxHashPrefix: detection.l2Receipt ? String(detection.l2Receipt.transactionHash).slice(0, 10) : null,
+        l2TxHashPrefix: detection.l2Receipt ? (detection.l2Receipt.hash || detection.l2Receipt.transactionHash).slice(0, 10) : null,
         contractAddressHash: detection.l2Receipt && detection.l2Receipt.to ? createHash('sha256').update(detection.l2Receipt.to).digest('hex').slice(0, 16) : null,
         failureAt: failureDetails.failureAt,
         failureReason: failureDetails.failureReason,
@@ -737,7 +766,7 @@ app.post('/analyze', async (req, res) => {
       console.error('Error recording pattern:', e.message)
       // Don't fail the main request
     }
-    
+
     // Notify session subscribers of analysis completion
     if (sessionId) {
       recordEvent(sessionId, 'analysis_completed', {
@@ -752,7 +781,7 @@ app.post('/analyze', async (req, res) => {
         responseTimeMs: Date.now() - start
       })
     }
-    
+
     return res.json(responseData)
   } catch (e) {
     // Notify session of analysis error
@@ -795,14 +824,14 @@ const MAX_BACKOFF = 60000 // 60s
 async function subscribePending(provider) {
   // remove previous handler if present
   if (pendingHandler && wsProvider && typeof wsProvider.off === 'function') {
-    try { wsProvider.off('pending', pendingHandler) } catch (e) {}
+    try { wsProvider.off('pending', pendingHandler) } catch (e) { }
   }
 
   pendingHandler = async (txHash) => {
     try {
       const tx = await provider.getTransaction(txHash)
       if (!tx) return
-          const payload = JSON.stringify({ hash: txHash, from: tx.from, to: tx.to, data: tx.data || tx.input || null, gasPrice: tx.maxFeePerGas ? tx.maxFeePerGas.toString() : (tx.gasPrice ? tx.gasPrice.toString() : null), time: Date.now() })
+      const payload = JSON.stringify({ hash: txHash, from: tx.from, to: tx.to, data: tx.data || tx.input || null, gasPrice: tx.maxFeePerGas ? tx.maxFeePerGas.toString() : (tx.gasPrice ? tx.gasPrice.toString() : null), time: Date.now() })
       for (const res of sseClients) {
         try { res.write(`data: ${payload}\n\n`) } catch (e) { /* ignore broken client */ }
       }
@@ -829,10 +858,10 @@ async function connectWsProvider(url) {
   if (!url) return
   try {
     if (wsProvider && typeof wsProvider.destroy === 'function') {
-      try { wsProvider.removeAllListeners && wsProvider.removeAllListeners() } catch (e) {}
-      try { wsProvider.destroy() } catch (e) {}
+      try { wsProvider.removeAllListeners && wsProvider.removeAllListeners() } catch (e) { }
+      try { wsProvider.destroy() } catch (e) { }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   try {
     wsProvider = new WebSocketProvider(url)
@@ -847,7 +876,7 @@ async function connectWsProvider(url) {
         w.addEventListener('close', () => { wsConnected = false; scheduleReconnect(url) })
         w.addEventListener('error', () => { wsConnected = false; scheduleReconnect(url) })
       }
-    } catch (e) {}
+    } catch (e) { }
 
     await subscribePending(wsProvider)
   } catch (e) {
@@ -869,14 +898,14 @@ setInterval(() => {
       // send comment ping
       res.write(': ping\n\n')
     } catch (e) {
-      try { sseClients.delete(res) } catch (ee) {}
+      try { sseClients.delete(res) } catch (ee) { }
     }
   }
   // update wsConnected if possible
   try {
     const w = wsProvider && wsProvider._websocket
     wsConnected = !!(w && w.readyState === 1)
-  } catch (e) {}
+  } catch (e) { }
 }, 15000)
 
 app.get('/mempool/stream', (req, res) => {
@@ -1245,24 +1274,52 @@ function computeRetryableLifecycle(ticket, lifecycleEvents) {
 // Retryable ticket lookup by L1 tx hash with enhanced lifecycle details
 app.get('/retryable/search', async (req, res) => {
   try {
-    const tx = req.query.tx
+    const { tx, network, custom } = req.query
+    const networkId = network || 'sepolia'
+    let customObj = null
+    if (custom) {
+      try { customObj = JSON.parse(custom) } catch (e) { }
+    }
+
     if (!tx) return res.status(400).json({ ok: false, error: 'tx query parameter required' })
     try {
       const indexerModule = indexer
-      if (!indexerModule) return res.json({ ok: false, tickets: [] })
-      const list = indexerModule.findByL1Tx ? indexerModule.findByL1Tx(tx) : []
-      
+      let list = indexerModule.findByL1Tx ? indexerModule.findByL1Tx(tx) : []
+
+      // Fallback: if indexer found nothing, try RPC logs (same logic as /analyze)
+      if (list.length === 0) {
+        const { l1Provider } = getProviders(networkId, customObj)
+        const detection = await findTxOnProviders(tx, networkId, customObj)
+        if (detection.l1Receipt) {
+          const l1Logs = await fetchL1Logs(detection.l1Receipt)
+          const found = findRetryableCreationLogs(l1Logs, detection.l1Receipt)
+          // Map to indexer-like format
+          list = found.map(f => ({
+            ticket_id: f.ticketId,
+            l1_tx_hash: f.transactionHash,
+            block_number: f.blockNumber,
+            from_address: f.from,
+            to_address: f.to,
+            gas_limit: f.gasLimit,
+            max_fee_per_gas: f.maxFeePerGas,
+            l2_call_value: f.l2CallValue,
+            data: f.data
+          }))
+        }
+      }
+
       // Enhance each ticket with lifecycle details
       const enhanced = await Promise.all(list.map(async (ticket) => {
         try {
-          const lifecycle = await findRetryableLifecycle(ticket.ticket_id, 800)
+          // Increase lookback for fallback search
+          const lifecycle = await findRetryableLifecycle(ticket.ticket_id, 1000, networkId, customObj)
           const details = computeRetryableLifecycle(ticket, lifecycle)
           return { ...ticket, lifecycle: details }
         } catch (e) {
           return { ...ticket, lifecycle: { status: 'UNKNOWN', error: e.message } }
         }
       }))
-      
+
       return res.json({ ok: true, tickets: enhanced })
     } catch (e) {
       return res.status(500).json({ ok: false, error: e.message })
@@ -1281,20 +1338,20 @@ app.post('/abi/upload', (req, res) => {
     if (!address || !abi) {
       return res.status(400).json({ error: 'address and abi (array) required' })
     }
-    
+
     // Normalize address to lowercase
     const normalizedAddress = String(address).toLowerCase()
-    
+
     // Validate that abi is an array
     if (!Array.isArray(abi)) {
       return res.status(400).json({ error: 'abi must be an array' })
     }
-    
+
     // Store the ABI
     abiStorage.set(normalizedAddress, abi)
-    
-    return res.json({ 
-      ok: true, 
+
+    return res.json({
+      ok: true,
       message: `ABI stored for address ${normalizedAddress}`,
       addressCount: abiStorage.size
     })
@@ -1308,11 +1365,11 @@ app.get('/abi/:address', (req, res) => {
   try {
     const address = String(req.params.address).toLowerCase()
     const abi = abiStorage.get(address)
-    
+
     if (!abi) {
       return res.status(404).json({ error: `No ABI found for address ${address}` })
     }
-    
+
     return res.json({ ok: true, address, abi })
   } catch (e) {
     return res.status(500).json({ error: e.message })
@@ -1323,8 +1380,8 @@ app.get('/abi/:address', (req, res) => {
 app.get('/abi/list', (req, res) => {
   try {
     const addresses = Array.from(abiStorage.keys())
-    return res.json({ 
-      ok: true, 
+    return res.json({
+      ok: true,
       count: addresses.length,
       addresses: addresses
     })
@@ -1338,15 +1395,15 @@ app.delete('/abi/:address', (req, res) => {
   try {
     const address = String(req.params.address).toLowerCase()
     const existed = abiStorage.has(address)
-    
+
     if (!existed) {
       return res.status(404).json({ error: `No ABI found for address ${address}` })
     }
-    
+
     abiStorage.delete(address)
-    
-    return res.json({ 
-      ok: true, 
+
+    return res.json({
+      ok: true,
       message: `ABI deleted for address ${address}`,
       addressCount: abiStorage.size
     })
@@ -1372,11 +1429,11 @@ app.delete('/abi/:address', (req, res) => {
 app.post('/validate/pre-submit', async (req, res) => {
   try {
     const { contractAddress, contractBytecodeHash, gasLimit, maxFeePerGas, submissionCost, callDataLength, functionName } = req.body
-    
+
     if (!gasLimit || !maxFeePerGas) {
       return res.status(400).json({ error: 'gasLimit and maxFeePerGas required' })
     }
-    
+
     const validationResult = await validatePreSubmission({
       contractAddress,
       contractBytecodeHash,
@@ -1386,7 +1443,7 @@ app.post('/validate/pre-submit', async (req, res) => {
       callDataLength: callDataLength ? parseInt(callDataLength) : 0,
       functionName: functionName || 'unknown'
     })
-    
+
     return res.json({
       ok: true,
       validation: validationResult,
@@ -1408,13 +1465,13 @@ app.post('/validate/pre-submit', async (req, res) => {
 app.post('/validate/estimate-gas', (req, res) => {
   try {
     const { callDataLength = 0, contractType = 'generic', isSafeMint = false } = req.body
-    
+
     const estimation = estimateGasLimit({
       callDataLength: parseInt(callDataLength),
       contractType,
       isSafeMint: !!isSafeMint
     })
-    
+
     return res.json({
       ok: true,
       gasEstimate: estimation,
@@ -1440,13 +1497,13 @@ app.post('/validate/estimate-gas', (req, res) => {
 app.get('/validate/check-parameters', async (req, res) => {
   try {
     const { type, value } = req.query
-    
+
     if (!type || !value) {
       return res.status(400).json({ error: 'type and value required' })
     }
-    
+
     let assessment = { parameter: type, value: value, status: 'unknown' }
-    
+
     switch (type.toLowerCase()) {
       case 'gas_limit':
         const gasNum = parseInt(value)
@@ -1466,7 +1523,7 @@ app.get('/validate/check-parameters', async (req, res) => {
           assessment.message = 'Within normal range'
         }
         break
-        
+
       case 'max_fee':
         try {
           const feeNum = parseInt(value)
@@ -1474,7 +1531,7 @@ app.get('/validate/check-parameters', async (req, res) => {
           if (baseFee) {
             const baseFeeNum = BigInt(baseFee)
             const userFee = BigInt(feeNum)
-            
+
             if (userFee < baseFeeNum) {
               assessment.status = 'CRITICAL'
               assessment.message = `Below current base fee (${baseFeeNum.toString()})`
@@ -1493,7 +1550,7 @@ app.get('/validate/check-parameters', async (req, res) => {
           assessment.message = 'Could not check current base fee'
         }
         break
-        
+
       case 'submission_cost':
         const costNum = parseInt(value)
         if (costNum < 100) {
@@ -1510,7 +1567,7 @@ app.get('/validate/check-parameters', async (req, res) => {
         }
         break
     }
-    
+
     return res.json({ ok: true, assessment })
   } catch (e) {
     console.error('Error checking parameters:', e)
@@ -1527,7 +1584,7 @@ app.get('/validate/check-parameters', async (req, res) => {
 app.get('/validate/what-if', async (req, res) => {
   try {
     const { baseGasLimit, newGasLimit, currentMaxFee, newMaxFee, submissionCost, contractBytecodeHash } = req.query
-    
+
     // Validate baseline
     const baseline = await validatePreSubmission({
       gasLimit: parseInt(baseGasLimit),
@@ -1535,7 +1592,7 @@ app.get('/validate/what-if', async (req, res) => {
       submissionCost: submissionCost ? parseInt(submissionCost) : 0,
       contractBytecodeHash
     })
-    
+
     // Simulate new parameters
     const simulated = await validatePreSubmission({
       gasLimit: newGasLimit ? parseInt(newGasLimit) : parseInt(baseGasLimit),
@@ -1543,9 +1600,9 @@ app.get('/validate/what-if', async (req, res) => {
       submissionCost: submissionCost ? parseInt(submissionCost) : 0,
       contractBytecodeHash
     })
-    
+
     const improvement = simulated.successProbability - baseline.successProbability
-    
+
     return res.json({
       ok: true,
       comparison: {
@@ -1609,11 +1666,11 @@ app.post('/patterns/record', createLimiter, (req, res) => {
     const safeFailureReason = String(failureReason).slice(0, 512)
     const safeFailureAt = failureAt ? String(failureAt).slice(0, 64) : null
     const safeContractAddress = contractAddress ? String(contractAddress).slice(0, 64) : null
-    
+
     // Anonymize: store only hash prefix
     const l1HashPrefix = safeTxHash.slice(0, 10) // 0x + 8 chars
     const contractHash = safeContractAddress ? createHash('sha256').update(safeContractAddress).digest('hex').slice(0, 16) : null
-    
+
     const recordId = recordFailure({
       l1TxHashPrefix: l1HashPrefix,
       contractAddressHash: contractHash,
@@ -1627,7 +1684,7 @@ app.post('/patterns/record', createLimiter, (req, res) => {
       panicCode: panicCode ? String(panicCode).slice(0, 128) : null,
       callDataLength: req.body.callDataLength ? parseInt(req.body.callDataLength) : null
     })
-    
+
     return res.json({
       ok: true,
       message: 'Failure recorded in pattern archive',
@@ -1652,14 +1709,14 @@ app.get('/patterns/similar/:contractAddress', (req, res) => {
   try {
     const { contractAddress } = req.params
     const { failureReason, gasLimit } = req.query
-    
+
     const contractHash = createHash('sha256').update(contractAddress).digest('hex').slice(0, 16)
-    
+
     const similar = findSimilarFailures(contractHash, {
       failureReason,
       gasLimit: gasLimit ? parseInt(gasLimit) : null
     })
-    
+
     return res.json({
       ok: true,
       contract: contractAddress,
@@ -1689,16 +1746,16 @@ app.get('/patterns/similar/:contractAddress', (req, res) => {
 app.get('/patterns/contract/:contractBytecodeHash', (req, res) => {
   try {
     const { contractBytecodeHash } = req.params
-    
+
     const pattern = getFailurePattern(contractBytecodeHash)
-    
+
     if (!pattern) {
       return res.json({
         ok: true,
         message: 'No pattern data available for this contract yet'
       })
     }
-    
+
     return res.json({
       ok: true,
       contract: contractBytecodeHash,
@@ -1727,9 +1784,9 @@ app.get('/patterns/contract/:contractBytecodeHash', (req, res) => {
 app.get('/patterns/risky', (req, res) => {
   try {
     const { limit = 20 } = req.query
-    
+
     const riskyContracts = getTopRiskyContracts(parseInt(limit))
-    
+
     return res.json({
       ok: true,
       count: riskyContracts.length,
@@ -1759,7 +1816,7 @@ app.get('/patterns/risky', (req, res) => {
 app.get('/patterns/stats', (req, res) => {
   try {
     const stats = getArchiveStats()
-    
+
     return res.json({
       ok: true,
       totalFailuresRecorded: stats.total_failures,
@@ -1790,16 +1847,16 @@ app.get('/patterns/stats', (req, res) => {
 app.post('/patterns/tag', (req, res) => {
   try {
     const { failureId, tagType, tagValue } = req.body
-    
+
     if (!failureId || !tagType || !tagValue) {
       return res.status(400).json({ error: 'failureId, tagType, and tagValue required' })
     }
-    
+
     // User hash (anonymous)
     const userHash = createHash('sha256').update(req.ip || 'unknown').digest('hex').slice(0, 16)
-    
+
     const tagId = addUserTag(failureId, tagType, tagValue, userHash)
-    
+
     return res.json({
       ok: true,
       message: 'Tag recorded',
@@ -2266,11 +2323,15 @@ server.on('error', (err) => {
   }
 })
 
-server.listen(PORT, () => {
-  console.log(`✅ Server listening on port ${PORT}`)
-  console.log(`   HTTP: http://localhost:${PORT}`)
-  console.log(`   WS: ws://localhost:${PORT}`)
-})
+if (process.env.VERCEL !== '1') {
+  server.listen(PORT, () => {
+    console.log(`✅ Server listening on port ${PORT}`)
+    console.log(`   HTTP: http://localhost:${PORT}`)
+    console.log(`   WS: ws://localhost:${PORT}`)
+  })
+}
+
+export default app
 
 // Graceful shutdown on signals
 process.on('SIGTERM', () => {

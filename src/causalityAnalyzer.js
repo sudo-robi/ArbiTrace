@@ -194,7 +194,7 @@ export function analyzeCrossChainCausality(detection, retryable, l2Receipt, fail
 export function computeCausalGraph(detection, retryables, l2Receipt) {
   const graph = {
     l1Submission: {
-      txHash: detection.l1Receipt ? detection.l1Receipt.transactionHash : null,
+      txHash: detection.l1Receipt ? (detection.l1Receipt.hash || detection.l1Receipt.transactionHash) : null,
       blockNumber: detection.l1Receipt ? detection.l1Receipt.blockNumber : null,
       status: detection.l1Receipt ? (detection.l1Receipt.status === 1 ? 'confirmed' : 'reverted') : null,
       gasUsed: detection.l1Receipt ? (detection.l1Receipt.gasUsed ? detection.l1Receipt.gasUsed.toString() : null) : null
@@ -204,7 +204,7 @@ export function computeCausalGraph(detection, retryables, l2Receipt) {
       ticketId: retryables[0].ticketId,
       from: retryables[0].from,
       to: retryables[0].to,
-      createdInL1Tx: retryables[0].transactionHash,
+      createdInL1Tx: retryables[0].hash || retryables[0].transactionHash,
       createdInL1Block: retryables[0].blockNumber,
       parameters: {
         maxGas: retryables[0].gasLimit,
@@ -215,7 +215,7 @@ export function computeCausalGraph(detection, retryables, l2Receipt) {
     } : null,
 
     l2Execution: {
-      txHash: detection.l2Receipt ? detection.l2Receipt.transactionHash : null,
+      txHash: detection.l2Receipt ? (detection.l2Receipt.hash || detection.l2Receipt.transactionHash) : null,
       blockNumber: detection.l2Receipt ? detection.l2Receipt.blockNumber : null,
       status: detection.l2Receipt ? (detection.l2Receipt.status === 1 ? 'confirmed' : 'reverted') : null,
       gasUsed: detection.l2Receipt ? (detection.l2Receipt.gasUsed ? detection.l2Receipt.gasUsed.toString() : null) : null,
@@ -225,7 +225,7 @@ export function computeCausalGraph(detection, retryables, l2Receipt) {
 
     causalChain: {
       step1: '1️⃣ L1 Transaction Submitted',
-      step1Link: detection.l1Receipt ? detection.l1Receipt.transactionHash : 'N/A',
+      step1Link: detection.l1Receipt ? (detection.l1Receipt.hash || detection.l1Receipt.transactionHash) : 'N/A',
       step1Description: 'User submits transaction on Ethereum L1 calling Inbox contract',
 
       step2: '2️⃣ RetryableTicketCreated Event',
@@ -237,7 +237,7 @@ export function computeCausalGraph(detection, retryables, l2Receipt) {
       step3Description: 'Arbitrum sequencer relays ticket execution to L2 after ~10 minutes',
 
       step4: '4️⃣ L2 Execution Result',
-      step4Link: detection.l2Receipt ? detection.l2Receipt.transactionHash : 'N/A',
+      step4Link: detection.l2Receipt ? (detection.l2Receipt.hash || detection.l2Receipt.transactionHash) : 'N/A',
       step4Description: detection.l2Receipt ? (detection.l2Receipt.status === 1 ? '✅ Success' : '❌ Revert') : 'Pending or not found'
     },
 
