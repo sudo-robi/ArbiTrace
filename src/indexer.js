@@ -1,17 +1,12 @@
-import Database from 'better-sqlite3'
-import fs from 'fs'
-import path from 'path'
+import { getDatabase } from './dbUtils.js'
 import { ethers } from 'ethers'
 import dotenv from 'dotenv'
 import { INBOX_ABI } from './arbitrum.js'
 
 dotenv.config()
 
-const DB_DIR = path.join(process.cwd(), 'data')
-if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true })
-const DB_PATH = path.join(DB_DIR, 'tickets.db')
-
-const db = new Database(DB_PATH)
+const DB_NAME = 'tickets.db'
+const db = getDatabase(DB_NAME)
 
 // Initialize tables: retryable_tickets, ticket_to_l2tx, stylus_meta
 db.exec(`
@@ -186,7 +181,7 @@ export async function indexL2Range(startBlock, endBlock) {
                   insertStylus.run({ tx_hash: receipt.transactionHash, ticket_id: null, panic_code: null, panic_reason: 'Stylus precompile touched', gas_used: receipt.gasUsed ? receipt.gasUsed.toString() : null, indexed_at: Date.now() })
                   results.stylusIndexed += 1
                 }
-              } catch (e) {}
+              } catch (e) { }
             }
 
           } catch (e) {

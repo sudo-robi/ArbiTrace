@@ -12,13 +12,9 @@
  * - Developer guidance (recommendations by contract)
  */
 
-import Database from 'better-sqlite3'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import { getDatabase } from './dbUtils.js'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const dbPath = path.join(__dirname, '../data/sessions.db')
-
+const DB_NAME = 'sessions.db'
 let db
 
 /**
@@ -26,8 +22,8 @@ let db
  */
 export function initLeaderboardAnalytics() {
   try {
-    db = new Database(dbPath)
-    db.pragma('journal_mode = WAL')
+    db = getDatabase(DB_NAME)
+    if (!db) return false
     console.log('✅ Leaderboard analytics initialized')
     return true
   } catch (error) {
@@ -90,7 +86,7 @@ export function getContractRiskScore(contractAddressHash) {
     const concentrationRisk = calculateConcentrationRisk(failureDistribution)
 
     // Total risk score (0-100)
-    const totalRisk = Math.min(100, 
+    const totalRisk = Math.min(100,
       failureRateRisk + severityRisk + frequencyRisk + concentrationRisk
     )
 
@@ -346,7 +342,7 @@ export function getFailureTypeStats() {
       let dist = {}
       try {
         dist = JSON.parse(failure_distribution || '{}')
-      } catch (e) {}
+      } catch (e) { }
 
       for (const [type, count] of Object.entries(dist)) {
         typeStats[type] = (typeStats[type] || 0) + count
@@ -440,7 +436,7 @@ export function getSeverityDistribution() {
       let dist = {}
       try {
         dist = JSON.parse(failure_distribution || '{}')
-      } catch (e) {}
+      } catch (e) { }
 
       for (const [type, count] of Object.entries(dist)) {
         distribution[type] = (distribution[type] || 0) + count

@@ -9,7 +9,7 @@ import bodyParser from 'body-parser'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { createRequire } from 'module'
+import { getDatabase } from './dbUtils.js'
 import { findTxOnProviders, fetchL1Logs, findRetryableCreationLogs, findL2TransactionFromRetryable, fetchL2TraceInfo, getProviders, findRetryableLifecycle, debugTraceTransaction, findRetryableLifecycleViaIndexer, computeL2BaseFeeAverage, fetchL2GasPriceHistory, extractMemoryStorageAccess, findParentL1ForL2Tx } from './arbitrum.js'
 import { analyzeCrossChainCausality, computeCausalGraph } from './causalityAnalyzer.js'
 import { resolveSelector } from './abiResolver.js'
@@ -89,20 +89,67 @@ if (process.env.NODE_ENV === 'production') {
 
 const PORT = process.env.PORT || 3000
 
-// Initialize pattern archive on startup
-initPatternArchive()
-initLeaderboardAnalytics()
-// Initialize auth DB (creates data/auth.db and optional admin user)
-auth.initAuth()
+// Initialize all components with robust error handling
+async function init() {
+  console.log('🏁 Initializing ArbiTrace server components...')
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
+  console.log(`📍 Vercel Detected: ${!!(process.env.VERCEL || process.env.NOW_REGION)}`)
 
-// Initialize gas estimation using the same pattern DB used by patternArchive
-try {
-  const patternsDbPath = path.join(__dirname, '..', 'data', 'patterns.db')
-  const patternsDb = require('better-sqlite3')(patternsDbPath)
-  initGasEstimation(patternsDb)
-} catch (err) {
-  console.error('❌ Failed to initialize gas estimation DB:', err.message)
+  // Initialize pattern archive on startup
+  try {
+    initPatternArchive()
+    console.log('✅ Pattern archive initialized')
+  } catch (e) {
+    console.error('❌ Failed to init pattern archive:', e.message)
+  }
+
+  try {
+    initLeaderboardAnalytics()
+    console.log('✅ Leaderboard analytics initialized')
+  } catch (e) {
+    console.error('❌ Failed to init leaderboard analytics:', e.message)
+  }
+
+  // Initialize auth DB
+  try {
+    auth.initAuth()
+    console.log('✅ Auth system initialized')
+  } catch (e) {
+    console.error('❌ Failed to init auth system:', e.message)
+  }
+
+  // Initialize session manager
+  try {
+    initSessionManager()
+    console.log('✅ Session manager initialized')
+  } catch (e) {
+    console.error('❌ Failed to init session manager:', e.message)
+  }
+
+  // Initialize gas estimation using robust dbUtils
+  try {
+    const patternsDb = getDatabase('patterns.db')
+    initGasEstimation(patternsDb)
+    console.log('✅ Gas estimation initialized')
+  } catch (err) {
+    console.error('❌ Failed to initialize gas estimation DB:', err.message)
+  }
+
+  // Gracefully handle onchain integration if listener fails
+  try {
+    const listener = await initOnchainIntegration(indexer, null);
+    mountOnchainRoutes(app, listener);
+    console.log('✅ Onchain integration initialized')
+  } catch (e) {
+    console.error('⚠️ Onchain integration failed to initialize (skipping):', e.message)
+  }
 }
+
+// Global initialization call
+init().catch(err => {
+  console.error('💥 Critical failure during server initialization:', err.message)
+})
+
 
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗

@@ -12,13 +12,11 @@
  * - Persist session history for replay
  */
 
-import Database from 'better-sqlite3';
-import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { getDatabase } from './dbUtils.js'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = path.join(__dirname, '../data/sessions.db');
+import { v4 as uuidv4 } from 'uuid';
+
+const DB_NAME = 'sessions.db'
 
 let db;
 const activeSessions = new Map(); // sessionId -> { metadata, subscribers: Set, events: [] }
@@ -29,9 +27,9 @@ const subscribers = new Map(); // wsClient -> Set of sessionIds
  */
 export function initSessionManager() {
   try {
-    db = new Database(dbPath);
-    db.pragma('journal_mode = WAL');
-    
+    db = getDatabase(DB_NAME)
+    if (!db) return false
+
     // Create sessions table for persistence
     db.exec(`
       CREATE TABLE IF NOT EXISTS sessions (
@@ -155,15 +153,15 @@ export function createSession(options = {}) {
  */
 export function getSession(sessionId) {
   const session = activeSessions.get(sessionId);
-  
+
   if (!session) {
     // Try to load from database
     try {
       const stmt = db.prepare('SELECT * FROM sessions WHERE id = ?');
       const dbSession = stmt.get(sessionId);
-      
+
       if (!dbSession) return null;
-      
+
       // Load events
       const events = db.prepare(`
         SELECT event_type, event_data, timestamp 
@@ -208,7 +206,7 @@ export function getSession(sessionId) {
  */
 export function subscribeToSession(client, sessionId) {
   const session = activeSessions.get(sessionId);
-  
+
   if (!session) {
     console.warn(`⚠️ Cannot subscribe to non-existent session: ${sessionId}`);
     return false;
@@ -253,7 +251,7 @@ export function subscribeToSession(client, sessionId) {
  */
 export function unsubscribeFromSession(client, sessionId) {
   const session = activeSessions.get(sessionId);
-  
+
   if (session) {
     session.subscribers.delete(client);
     console.log(`✅ Client unsubscribed from session ${sessionId}`);
@@ -271,7 +269,7 @@ export function unsubscribeFromSession(client, sessionId) {
  */
 export function removeClient(client) {
   const clientSessions = subscribers.get(client);
-  
+
   if (clientSessions) {
     for (const sessionId of clientSessions) {
       unsubscribeFromSession(client, sessionId);
@@ -290,7 +288,7 @@ export function removeClient(client) {
  */
 export function recordEvent(sessionId, eventType, eventData = {}) {
   const session = activeSessions.get(sessionId);
-  
+
   if (!session) {
     console.warn(`⚠️ Cannot record event in non-existent session: ${sessionId}`);
     return false;
@@ -345,7 +343,7 @@ export function recordEvent(sessionId, eventType, eventData = {}) {
  */
 export function broadcastToSession(sessionId, message) {
   const session = activeSessions.get(sessionId);
-  
+
   if (!session) {
     console.warn(`⚠️ Cannot broadcast to non-existent session: ${sessionId}`);
     return;
@@ -404,7 +402,7 @@ export function getShareId(sessionId) {
  */
 export function listActiveSessions() {
   const sessions = [];
-  
+
   for (const [sessionId, session] of activeSessions) {
     sessions.push({
       id: sessionId,
@@ -414,7 +412,7 @@ export function listActiveSessions() {
       status: session.status,
       viewers: session.subscribers.size,
       events: session.events.length,
-      analysisProgress: session.startedAnalysis ? 
+      analysisProgress: session.startedAnalysis ?
         `${session.analysisStep}/${session.totalSteps}` : 'pending',
       ageSeconds: Math.floor(Date.now() / 1000) - session.createdAt
     });
@@ -451,7 +449,7 @@ export function archiveSession(sessionId) {
 export function cleanupExpiredSessions() {
   try {
     const now = Math.floor(Date.now() / 1000);
-    
+
     // Find expired sessions
     const expiredSessions = db.prepare(`
       SELECT id FROM sessions 
@@ -474,7 +472,7 @@ export function cleanupExpiredSessions() {
       // Mark as archived in database
       db.prepare('UPDATE sessions SET status = ? WHERE id = ?')
         .run('archived', id);
-      
+
       activeSessions.delete(id);
     }
 
@@ -501,7 +499,7 @@ function generateSessionId() {
 export function getSessionStats() {
   try {
     const totalActive = activeSessions.size;
-    
+
     const dbStats = db.prepare(`
       SELECT 
         COUNT(*) as total,

@@ -1,21 +1,14 @@
-import Database from 'better-sqlite3'
-import path from 'path'
-import fs from 'fs'
-import { fileURLToPath } from 'url'
+import { getDatabase } from './dbUtils.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const AUTH_DB_PATH = path.join(process.cwd(), 'data', 'auth.db')
-
+const DB_NAME = 'auth.db'
 let db
 
 function initAuth() {
   try {
-    const dir = path.dirname(AUTH_DB_PATH)
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    db = new Database(AUTH_DB_PATH)
-    db.pragma('journal_mode = WAL')
+    db = getDatabase(DB_NAME)
+    if (!db) return false
 
     db.exec(`
       CREATE TABLE IF NOT EXISTS users (

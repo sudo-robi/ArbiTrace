@@ -11,21 +11,18 @@
  * - patternMatches: Cache of similar failure lookups
  */
 
-import Database from 'better-sqlite3'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import { getDatabase } from './dbUtils.js'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DB_PATH = path.join(__dirname, '..', 'data', 'patterns.db')
-
+const DB_NAME = 'patterns.db'
 let db = null
 
 export function initPatternArchive() {
-  db = new Database(DB_PATH)
-  db.pragma('journal_mode = WAL')
+  try {
+    db = getDatabase(DB_NAME)
+    if (!db) return false
 
-  // Create tables if they don't exist
-  db.exec(`
+    // Create tables if they don't exist
+    db.exec(`
     -- Main failure record (anonymized)
     CREATE TABLE IF NOT EXISTS failures (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,8 +128,11 @@ export function initPatternArchive() {
     CREATE INDEX IF NOT EXISTS idx_failures_contract ON failures(contract_address_hash);
     CREATE INDEX IF NOT EXISTS idx_failures_timestamp ON failures(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_patterns_risk ON failure_patterns(risk_score DESC);
-    CREATE INDEX IF NOT EXISTS idx_tags_type ON user_tags(tag_type);
-  `)
+    `)
+  } catch (err) {
+    console.error('❌ Failed to initialize pattern archive:', err.message)
+    return false
+  }
 }
 
 /**
@@ -145,7 +145,7 @@ export function recordFailure(failureData) {
   if (!db) initPatternArchive()
 
   const stmt = db.prepare(`
-    INSERT OR IGNORE INTO failures (
+    INSERT OR IGNORE INTO failures(
       l1_tx_hash_prefix,
       l2_tx_hash_prefix,
       contract_address_hash,
@@ -163,8 +163,8 @@ export function recordFailure(failureData) {
       network,
       is_stylus,
       panic_code
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `)
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
 
   try {
     const result = stmt.run(
@@ -216,12 +216,12 @@ export function findSimilarFailures(contractAddressHash, params = {}) {
       (
         SELECT COUNT(*) FROM user_tags ut 
         WHERE ut.failure_id = f.id AND ut.tag_type = 'FIX_APPLIED'
-      ) as fix_count
+    ) as fix_count
     FROM failures f
     WHERE f.contract_address_hash = ?
-    ORDER BY f.created_at DESC
+      ORDER BY f.created_at DESC
     LIMIT 50
-  `).all(contractAddressHash)
+      `).all(contractAddressHash)
 
   // Calculate similarity scores (same failure reason, similar gas params)
   const scored = exactMatches.map(failure => {
@@ -262,7 +262,7 @@ export function getFailurePattern(contractBytecodeHash) {
   const pattern = db.prepare(`
     SELECT * FROM failure_patterns
     WHERE contract_bytecode_hash = ?
-  `).get(contractBytecodeHash)
+      `).get(contractBytecodeHash)
 
   if (!pattern) return null
 
@@ -290,7 +290,7 @@ function updatePatternStats(contractBytecodeHash, failureData) {
   const stmt = db.prepare(`
     SELECT * FROM failure_patterns
     WHERE contract_bytecode_hash = ?
-  `)
+      `)
 
   const existing = stmt.get(contractBytecodeHash)
   const reason = failureData.failureReason || 'UNKNOWN'
@@ -299,15 +299,15 @@ function updatePatternStats(contractBytecodeHash, failureData) {
     // Update existing pattern
     const updateStmt = db.prepare(`
       UPDATE failure_patterns
-      SET 
-        total_failures = total_failures + 1,
-        ${getReasonColumn(reason)} = ${getReasonColumn(reason)} + 1,
+    SET
+    total_failures = total_failures + 1,
+      ${getReasonColumn(reason)} = ${getReasonColumn(reason)} + 1,
         avg_gas_limit = ((avg_gas_limit * total_failures) + ?) / (total_failures + 1),
         avg_max_fee_per_gas = ((avg_max_fee_per_gas * total_failures) + ?) / (total_failures + 1),
         most_recent_at = CURRENT_TIMESTAMP,
         updated_at = CURRENT_TIMESTAMP
       WHERE contract_bytecode_hash = ?
-    `)
+      `)
 
     try {
       updateStmt.run(
@@ -320,23 +320,23 @@ function updatePatternStats(contractBytecodeHash, failureData) {
       db.prepare(`
         UPDATE failure_patterns
         SET total_failures = total_failures + 1,
-            ${getReasonColumn(reason)} = ${getReasonColumn(reason)} + 1,
-            most_recent_at = CURRENT_TIMESTAMP
+      ${getReasonColumn(reason)} = ${getReasonColumn(reason)} + 1,
+        most_recent_at = CURRENT_TIMESTAMP
         WHERE contract_bytecode_hash = ?
       `).run(contractBytecodeHash)
     }
   } else {
     // Create new pattern
     const insertStmt = db.prepare(`
-      INSERT INTO failure_patterns (
+      INSERT INTO failure_patterns(
         contract_bytecode_hash,
         total_failures,
         ${getReasonColumn(reason)},
         avg_gas_limit,
         avg_max_fee_per_gas,
         avg_call_data_length
-      ) VALUES (?, ?, 1, ?, ?, ?)
-    `)
+      ) VALUES(?, ?, 1, ?, ?, ?)
+        `)
 
     insertStmt.run(
       contractBytecodeHash,
@@ -378,7 +378,7 @@ function updateRiskScore(contractBytecodeHash) {
   const pattern = db.prepare(`
     SELECT * FROM failure_patterns
     WHERE contract_bytecode_hash = ?
-  `).get(contractBytecodeHash)
+      `).get(contractBytecodeHash)
 
   if (!pattern) return
 
@@ -421,8 +421,8 @@ function updateRiskScore(contractBytecodeHash) {
   db.prepare(`
     UPDATE failure_patterns
     SET risk_score = ?
-    WHERE contract_bytecode_hash = ?
-  `).run(Math.min(100, score), contractBytecodeHash)
+      WHERE contract_bytecode_hash = ?
+        `).run(Math.min(100, score), contractBytecodeHash)
 }
 
 /**
@@ -432,9 +432,9 @@ export function addUserTag(failureId, tagType, tagValue, userHash) {
   if (!db) initPatternArchive()
 
   const stmt = db.prepare(`
-    INSERT INTO user_tags (failure_id, tag_type, tag_value, user_hash)
-    VALUES (?, ?, ?, ?)
-  `)
+    INSERT INTO user_tags(failure_id, tag_type, tag_value, user_hash)
+    VALUES(?, ?, ?, ?)
+      `)
 
   try {
     return stmt.run(failureId, tagType, tagValue, userHash).lastInsertRowid
@@ -451,8 +451,8 @@ export function getTopRiskyContracts(limit = 20) {
   if (!db) initPatternArchive()
 
   return db.prepare(`
-    SELECT 
-      contract_bytecode_hash,
+    SELECT
+    contract_bytecode_hash,
       total_failures,
       risk_score,
       most_recent_at,
@@ -463,7 +463,7 @@ export function getTopRiskyContracts(limit = 20) {
     WHERE total_failures >= 5
     ORDER BY risk_score DESC, total_failures DESC
     LIMIT ?
-  `).all(limit)
+      `).all(limit)
 }
 
 /**
@@ -473,8 +473,8 @@ export function getArchiveStats() {
   if (!db) initPatternArchive()
 
   const stats = db.prepare(`
-    SELECT 
-      COUNT(*) as total_failures,
+    SELECT
+    COUNT(*) as total_failures,
       COUNT(DISTINCT contract_address_hash) as unique_contracts,
       COUNT(CASE WHEN failure_reason = 'OUT_OF_GAS' THEN 1 END) as out_of_gas_count,
       COUNT(CASE WHEN failure_reason = 'LOW_GAS_LIMIT' THEN 1 END) as low_gas_limit_count,
@@ -485,7 +485,7 @@ export function getArchiveStats() {
       AVG(gas_limit) as avg_gas_limit,
       AVG(max_fee_per_gas) as avg_max_fee_per_gas
     FROM failures
-  `).get()
+      `).get()
 
   return {
     ...stats,

@@ -1,12 +1,7 @@
-import Database from 'better-sqlite3'
-import fs from 'fs'
-import path from 'path'
+import { getDatabase } from './dbUtils.js'
 
-const DB_DIR = path.join(process.cwd(), 'data')
-if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true })
-const DB_PATH = path.join(DB_DIR, 'abi_cache.db')
-
-const db = new Database(DB_PATH)
+const DB_NAME = 'abi_cache.db'
+const db = getDatabase(DB_NAME)
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS signatures (
