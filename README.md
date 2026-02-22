@@ -33,6 +33,9 @@ Demo: Test with a real Arbitrum tx
 2. Copy the tx hash.
 3. Paste into the web interface at **http://localhost:3000** and click "Analyze".
 
+> [!IMPORTANT]
+> Always ensure you are using a transaction hash or contract address from the specific network you have selected (e.g., Arbitrum Sepolia, Arbitrum Nova, etc.). The analysis will fail if you attempt to analyze a transaction hash from one network while the debugger is pointing to another.
+
 Example using curl:
 
 ```bash
