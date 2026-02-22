@@ -11,6 +11,7 @@ import { ethers } from 'ethers';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { withRetry, callWithTimeout } from './arbitrum.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -72,8 +73,12 @@ export class OnchainEventListener {
     let lastBlock = null;
 
     const poll = async () => {
+      let waitTime = pollInterval;
       try {
-        const currentBlock = await this.provider.getBlockNumber();
+        const currentBlock = await withRetry(
+          () => callWithTimeout(this.provider.getBlockNumber(), 8000),
+          { label: 'PollBlockNumber', maxAttempts: 4, initialDelay: 2000 }
+        );
 
         if (lastBlock === null) {
           lastBlock = fromBlock === 'latest' ? currentBlock : parseInt(fromBlock, 10);
@@ -81,7 +86,10 @@ export class OnchainEventListener {
 
         // Query events since last block
         const filter = this.contract.filters.RetryableIncidentReported();
-        const events = await this.contract.queryFilter(filter, lastBlock, currentBlock);
+        const events = await withRetry(
+          () => callWithTimeout(this.contract.queryFilter(filter, lastBlock, currentBlock), 15000),
+          { label: 'QueryFilter', maxAttempts: 3, initialDelay: 2000 }
+        );
 
         for (const event of events) {
           await this.handleIncidentEvent(event);
@@ -90,9 +98,11 @@ export class OnchainEventListener {
         lastBlock = currentBlock + 1;
       } catch (err) {
         this.logger.error('[OnchainListener] Error polling events:', err);
+        // Increase wait time on failure to avoid hammering broken RPC
+        waitTime = pollInterval * 2;
       }
 
-      setTimeout(poll, pollInterval);
+      setTimeout(poll, waitTime);
     };
 
     poll();
@@ -206,7 +216,10 @@ export class OnchainEventListener {
    */
   async getTopFailures(n = 6) {
     try {
-      const result = await this.contract.topFailures(n);
+      const result = await withRetry(
+        () => callWithTimeout(this.contract.topFailures(n), 5000),
+        { label: 'GetTopFailures', maxAttempts: 2 }
+      );
       const failures = result[0].map((typeCode, idx) => ({
         type: FAILURE_TYPE_NAMES[typeCode] || `Unknown(${typeCode})`,
         typeCode,

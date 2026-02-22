@@ -70,19 +70,24 @@ patternsDb.exec(`
 
   CREATE TABLE IF NOT EXISTS user_tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    contract_bytecode_hash TEXT,
-    tag TEXT,
+    failure_id INTEGER NOT NULL,
     tag_type TEXT,
-    severity TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    tag_value TEXT,
+    user_hash TEXT,
+    upvotes INTEGER DEFAULT 0,
+    downvotes INTEGER DEFAULT 0,
+    is_verified BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(failure_id) REFERENCES failures(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS pattern_matches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    query_contract_hash TEXT,
-    similar_contract_hash TEXT,
-    match_score INTEGER,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    source_failure_id INTEGER,
+    similar_failure_ids TEXT,
+    match_score REAL,
+    computed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(source_failure_id) REFERENCES failures(id) ON DELETE CASCADE
   );
 `)
 
@@ -194,7 +199,7 @@ let totalFailures = 0
 
 for (const { contract, baseGasLimit, baseMaxFee, baseSubmissionCost, failures } of sampleFailures) {
   const contractHash = createHash('sha256').update(contract).digest('hex').slice(0, 16)
-  
+
   // Add individual failures with randomized parameters
   for (let i = 0; i < failures.length; i++) {
     const f = failures[i]
@@ -203,7 +208,7 @@ for (const { contract, baseGasLimit, baseMaxFee, baseSubmissionCost, failures } 
     const submissionCost = randomSubmissionCost(baseSubmissionCost)
     const callDataLength = randomCallDataLength()
     const actualGasUsed = randomActualGasUsed(gasLimit)
-    
+
     patternsDb.prepare(`
       INSERT OR IGNORE INTO failures (
         l1_tx_hash_prefix, l2_tx_hash_prefix, contract_address_hash,
@@ -235,13 +240,13 @@ for (const { contract, baseGasLimit, baseMaxFee, baseSubmissionCost, failures } 
   // Add pattern aggregates
   const failureCount = failures.length
   const totalAttempts = Math.ceil(failureCount / (0.2 + Math.random() * 0.4)) // 20-60% failure rate
-  
+
   const reasonCounts = {}
   for (const f of failures) {
     reasonCounts[f.reason] = (reasonCounts[f.reason] || 0) + 1
   }
   const mostCommon = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0][0]
-  
+
   const riskScores = {
     'OUT_OF_GAS': 80,
     'LOW_GAS_LIMIT': 75,
@@ -250,7 +255,7 @@ for (const { contract, baseGasLimit, baseMaxFee, baseSubmissionCost, failures } 
     'LOGIC_REVERT': 60,
     'TIMEOUT': 85
   }
-  
+
   const baseRisk = riskScores[mostCommon] || 50
   const failureRate = Math.round((failureCount / totalAttempts) * 100)
   const riskScore = Math.min(100, baseRisk + failureRate / 2)

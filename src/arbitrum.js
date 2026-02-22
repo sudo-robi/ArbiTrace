@@ -87,6 +87,41 @@ export async function callWithTimeout(promise, ms) {
   ])
 }
 
+/**
+ * Robust retry utility with exponential backoff
+ * @param {Function} task - Async function to execute
+ * @param {Object} options - { maxAttempts, initialDelay, factor }
+ */
+export async function withRetry(task, options = {}) {
+  const { maxAttempts = 3, initialDelay = 1000, factor = 2, label = 'Task' } = options
+  let delay = initialDelay
+  let lastError
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await task()
+    } catch (err) {
+      lastError = err
+      const isNetworkError = err.message.includes('timeout') ||
+        err.message.includes('rate limit') ||
+        err.message.includes('ETIMEDOUT') ||
+        err.message.includes('ENETUNREACH') ||
+        err.code === 'ETIMEDOUT' ||
+        err.code === 'TIMEOUT' ||
+        (err.shortMessage && (err.shortMessage.includes('timeout') || err.shortMessage.includes('rate limit')))
+
+      if (!isNetworkError || attempt === maxAttempts) {
+        throw err
+      }
+
+      console.warn(`[Retry] ${label} failed (attempt ${attempt}/${maxAttempts}): ${err.message}. Retrying in ${delay}ms...`)
+      await new Promise(resolve => setTimeout(resolve, delay))
+      delay *= factor
+    }
+  }
+  throw lastError
+}
+
 export async function findTxOnProviders(txHash, networkId = 'sepolia', custom = null) {
   const { l1Provider, l2Provider } = getProviders(networkId, custom)
   const out = {
@@ -97,13 +132,13 @@ export async function findTxOnProviders(txHash, networkId = 'sepolia', custom = 
     errors: []
   }
 
-  const RPC_TIMEOUT_MS = 5000
+  const RPC_TIMEOUT_MS = 10000 // Increased from 5s to 10s for initial check
 
   try {
-    // fetch L1 and L2 receipts in parallel to reduce latency, with timeouts
+    // fetch L1 and L2 receipts in parallel to reduce latency, with timeouts and retries
     const [r1, r2] = await Promise.allSettled([
-      callWithTimeout(l1Provider.getTransactionReceipt(txHash), RPC_TIMEOUT_MS),
-      callWithTimeout(l2Provider.getTransactionReceipt(txHash), RPC_TIMEOUT_MS)
+      withRetry(() => callWithTimeout(l1Provider.getTransactionReceipt(txHash), RPC_TIMEOUT_MS), { label: 'L1Receipt', maxAttempts: 4, initialDelay: 2000 }),
+      withRetry(() => callWithTimeout(l2Provider.getTransactionReceipt(txHash), RPC_TIMEOUT_MS), { label: 'L2Receipt', maxAttempts: 4, initialDelay: 2000 })
     ])
     if (r1.status === 'fulfilled' && r1.value) {
       out.l1Receipt = r1.value
@@ -265,11 +300,14 @@ export async function computeL2BaseFeeAverage(count = 10, blocks = null, network
     let sum = 0n
     for (let b = start; b <= latest; b++) {
       try {
-        // use callWithTimeout to avoid long-hanging block fetches
-        const block = await callWithTimeout(l2Provider.getBlock(b), 3000)
+        // use callWithTimeout and withRetry to avoid long-hanging block fetches
+        const block = await withRetry(
+          () => callWithTimeout(l2Provider.getBlock(b), 6000),
+          { label: `BlockFetch-${b}`, maxAttempts: 3, initialDelay: 1500 }
+        )
         if (block && block.baseFeePerGas) sum += BigInt(block.baseFeePerGas)
       } catch (e) {
-        // ignore block fetch error or timeout
+        // ignore block fetch error or timeout after retries
       }
     }
     const len = BigInt(Math.max(1, latest - start + 1))
@@ -283,12 +321,18 @@ export async function computeL2BaseFeeAverage(count = 10, blocks = null, network
 export async function fetchL2TraceInfo(txHash, networkId = 'sepolia', custom = null) {
   const { l2Provider } = getProviders(networkId, custom)
   try {
-    const receipt = await l2Provider.getTransactionReceipt(txHash)
+    const receipt = await withRetry(
+      () => callWithTimeout(l2Provider.getTransactionReceipt(txHash), 5000),
+      { label: `FetchTraceReceipt-${txHash}`, maxAttempts: 2 }
+    )
     if (!receipt) return null
     // Fetch transaction to get calldata/input
     let tx = null
     try {
-      tx = await l2Provider.getTransaction(txHash)
+      tx = await withRetry(
+        () => callWithTimeout(l2Provider.getTransaction(txHash), 5000),
+        { label: `FetchTraceTx-${txHash}`, maxAttempts: 2 }
+      )
     } catch (e) {
       tx = null
     }
@@ -318,20 +362,26 @@ export async function debugTraceTransaction(txHash, networkId = 'sepolia', custo
   const provider = l2DebugProvider || l2Provider
 
   try {
-    // First try with call tracer (default)
-    const res = await provider.send('debug_traceTransaction', [txHash, {}])
+    // First try with call tracer (default), use withRetry as this is a heavy call
+    const res = await withRetry(
+      () => callWithTimeout(provider.send('debug_traceTransaction', [txHash, {}]), 15000),
+      { label: `DebugTrace-${txHash}`, maxAttempts: 2 }
+    )
 
     // If successful, attempt to get more detailed trace with storage access
     if (res && !res.error) {
       try {
         // Try with callTracer to capture storage access patterns
-        const detailedTrace = await provider.send('debug_traceTransaction', [
-          txHash,
-          {
-            tracer: 'callTracer',
-            tracerConfig: { onlyTopCall: false }
-          }
-        ]).catch(() => null)
+        const detailedTrace = await withRetry(
+          () => callWithTimeout(provider.send('debug_traceTransaction', [
+            txHash,
+            {
+              tracer: 'callTracer',
+              tracerConfig: { onlyTopCall: false }
+            }
+          ]), 15000),
+          { label: `DetailedTrace-${txHash}`, maxAttempts: 1 } // Only 1 attempt for heavy detailed trace
+        ).catch(() => null)
 
         // Merge detailed trace data if available
         if (detailedTrace) {
@@ -404,28 +454,32 @@ export function extractMemoryStorageAccess(trace) {
 export async function fetchL2GasPriceHistory(blockCount = 100, networkId = 'sepolia', custom = null) {
   const { l2Provider } = getProviders(networkId, custom)
   try {
-    const latest = await l2Provider.getBlockNumber()
+    const latest = await withRetry(() => l2Provider.getBlockNumber(), { label: 'GetLatestBlock', maxAttempts: 4, initialDelay: 2000 })
     const start = Math.max(0, latest - blockCount + 1)
 
-    // Fetch blocks in parallel to avoid sequential timeout issues
-    const blockPromises = []
-    for (let b = start; b <= latest; b++) {
-      blockPromises.push(
-        callWithTimeout(l2Provider.getBlock(b), 4000)
-          .catch(() => null)
-      )
-    }
-
-    const blocks = await Promise.all(blockPromises)
-    const history = blocks
-      .filter(b => b !== null)
-      .map(block => ({
+    // Fetch blocks in sequential chunks to avoid parallel rate limits on public RPCs
+    const history = []
+    const CHUNK_SIZE = 3 // Reduced from 5 to 3 for even more conservative burst
+    for (let i = start; i <= latest; i += CHUNK_SIZE) {
+      const end = Math.min(i + CHUNK_SIZE - 1, latest)
+      const chunkPromises = []
+      for (let b = i; b <= end; b++) {
+        chunkPromises.push(
+          withRetry(
+            () => callWithTimeout(l2Provider.getBlock(b), 7000),
+            { label: `GasHistoryBlock-${b}`, maxAttempts: 3, initialDelay: 1500 }
+          ).catch(() => null)
+        )
+      }
+      const results = await Promise.all(chunkPromises)
+      history.push(...results.filter(b => b !== null).map(block => ({
         blockNumber: block.number,
         baseFeePerGas: block.baseFeePerGas ? block.baseFeePerGas.toString() : null,
         timestamp: block.timestamp,
         gasUsed: block.gasUsed ? block.gasUsed.toString() : null,
         gasLimit: block.gasLimit ? block.gasLimit.toString() : null
-      }))
+      })))
+    }
 
     return {
       history,
@@ -546,27 +600,30 @@ export async function findParentL1ForL2Tx(l2Receipt, networkId = 'sepolia', cust
     const CHUNK_SIZE = 10
     const topic1 = ticketId.length === 66 ? ticketId : ethers.zeroPadValue(ethers.toBeHex(ticketId), 32)
 
-    // We scan backwards from latestL1 to find it faster
+    // We scan backwards from latestL1 to find it faster, using smaller chunks for public RPC limits
     for (let current = latestL1; current > fromBlock; current -= CHUNK_SIZE) {
       const start = Math.max(fromBlock, current - CHUNK_SIZE + 1)
       try {
-        const logs = await l1Provider.getLogs({
-          fromBlock: start,
-          toBlock: current,
-          topics: [
-            '0xc4ead0e389ccdf68bf81807c89f6820029b15cb9f3d1e0e5b176bf0ceaa74b50', // RetryableTicketCreated topic
-            topic1
-          ]
-        })
+        const logs = await withRetry(
+          () => l1Provider.getLogs({
+            fromBlock: start,
+            toBlock: current,
+            topics: [
+              '0xc4ead0e389ccdf68bf81807c89f6820029b15cb9f3d1e0e5b176bf0ceaa74b50', // RetryableTicketCreated topic
+              topic1
+            ]
+          }),
+          { label: `L1LogScan-${start}-${current}`, maxAttempts: 2 }
+        )
 
         if (logs && logs.length > 0) {
           console.log(`[Backtrace] RESOLVED via L1 log scan (at block ${logs[0].blockNumber}): ${logs[0].transactionHash}`)
           return logs[0].transactionHash
         }
       } catch (e) {
-        if (e.message.indexOf('10 block range') !== -1) {
+        if (e.message.indexOf('10 block range') !== -1 || e.message.includes('rate limit')) {
           // Fallback to even smaller or just log and continue if one fails
-          console.warn(`[Backtrace] Chunk ${start}-${current} hit limit, continuing...`)
+          console.warn(`[Backtrace] Chunk ${start}-${current} hit limit or rate limit, continuing...`)
         } else {
           throw e
         }
