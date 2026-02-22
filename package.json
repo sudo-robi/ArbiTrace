@@ -2,6 +2,9 @@
   "name": "arb-debugger-mvp",
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
@@ -14,7 +17,7 @@
   "bin": {},
   "dependencies": {
     "axios": "^1.4.0",
-    "better-sqlite3": "^8.0.0",
+    "better-sqlite3": "^11.0.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "helmet": "^6.0.1",
