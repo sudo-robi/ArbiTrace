@@ -33,7 +33,6 @@ async function ensureProviders() {
 }
 
 async function indexLoop() {
-  console.log('Indexer worker starting...')
   let state = readState()
   try {
     const { l1Provider, l2Provider } = await ensureProviders()
@@ -44,11 +43,9 @@ async function indexLoop() {
         let startL1 = Math.max(0, (state.lastL1 || 0) - REORG_DEPTH)
         const endL1 = Math.min(latestL1, startL1 + L1_BATCH)
         if (endL1 >= startL1) {
-          console.log(`Indexing L1 blocks ${startL1}..${endL1}`)
           try {
             const res = await indexer.indexRange(startL1, endL1)
-            console.log('L1 index result:', res)
-          } catch (e) { console.warn('L1 index error', e.message) }
+          } catch (e) {}
           state.lastL1 = endL1
           writeState(state)
         }
@@ -58,11 +55,9 @@ async function indexLoop() {
         let startL2 = Math.max(0, (state.lastL2 || 0) - REORG_DEPTH)
         const endL2 = Math.min(latestL2, startL2 + L2_BATCH)
         if (endL2 >= startL2) {
-          console.log(`Indexing L2 blocks ${startL2}..${endL2}`)
           try {
             const res2 = await indexer.indexL2Range(startL2, endL2)
-            console.log('L2 index result:', res2)
-          } catch (e) { console.warn('L2 index error', e.message) }
+          } catch (e) {}
           state.lastL2 = endL2
           writeState(state)
         }
@@ -70,7 +65,6 @@ async function indexLoop() {
         // sleep until next loop
         await sleep(LOOP_DELAY_MS)
       } catch (e) {
-        console.warn('Indexer loop error', e.message)
         await sleep(5000)
       }
     }

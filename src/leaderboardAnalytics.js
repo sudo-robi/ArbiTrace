@@ -28,7 +28,6 @@ export function initLeaderboardAnalytics() {
   try {
     db = new Database(dbPath)
     db.pragma('journal_mode = WAL')
-    console.log('✅ Leaderboard analytics initialized')
     return true
   } catch (error) {
     console.error('❌ Failed to initialize leaderboard analytics:', error)

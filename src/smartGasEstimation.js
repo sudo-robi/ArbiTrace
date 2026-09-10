@@ -23,7 +23,6 @@ let db;
  */
 export function initGasEstimation(database) {
   db = database;
-  console.log('✅ Gas estimation engine initialized');
 }
 
 /**

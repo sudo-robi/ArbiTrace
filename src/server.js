@@ -454,7 +454,6 @@ app.post('/analyze', async (req, res) => {
       promise,
       new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timeout`)), ms))
     ]).catch(err => {
-      console.warn(`⚠️ ${label} failed or timed out:`, err.message)
       return null
     })
 
@@ -851,7 +850,6 @@ async function connectWsProvider(url) {
 
     await subscribePending(wsProvider)
   } catch (e) {
-    console.warn('Failed to connect to ARBITRUM_WS_URL for mempool SSE:', e.message || e)
     wsProvider = null
     wsConnected = false
     scheduleReconnect(url)
@@ -1855,7 +1853,6 @@ startSessionCleanupInterval()
 // Handle WebSocket connections
 wss.on('connection', (ws, req) => {
   const clientId = `client_${Math.random().toString(36).slice(2, 9)}`
-  console.log(`✅ WebSocket client connected: ${clientId}`)
 
   ws.on('message', (data) => {
     try {
@@ -1904,7 +1901,6 @@ wss.on('connection', (ws, req) => {
           break
 
         default:
-          console.warn(`⚠️ Unknown message type: ${type}`)
       }
     } catch (error) {
       console.error('❌ WebSocket message error:', error)
@@ -1917,7 +1913,6 @@ wss.on('connection', (ws, req) => {
 
   ws.on('close', () => {
     removeClient(ws)
-    console.log(`✅ WebSocket client disconnected: ${clientId}`)
   })
 
   ws.on('error', (error) => {
@@ -2267,16 +2262,11 @@ server.on('error', (err) => {
 })
 
 server.listen(PORT, () => {
-  console.log(`✅ Server listening on port ${PORT}`)
-  console.log(`   HTTP: http://localhost:${PORT}`)
-  console.log(`   WS: ws://localhost:${PORT}`)
 })
 
 // Graceful shutdown on signals
 process.on('SIGTERM', () => {
-  console.log('📨 SIGTERM received, shutting down gracefully...')
   server.close(() => {
-    console.log('✅ Server closed')
     process.exit(0)
   })
   setTimeout(() => {
@@ -2286,9 +2276,7 @@ process.on('SIGTERM', () => {
 })
 
 process.on('SIGINT', () => {
-  console.log('📨 SIGINT received, shutting down gracefully...')
   server.close(() => {
-    console.log('✅ Server closed')
     process.exit(0)
   })
   setTimeout(() => {

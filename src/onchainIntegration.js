@@ -47,7 +47,6 @@ function enrichIncidentWithOnchainData(indexer, onchainIncident) {
   // - Mark as "verified on Arbitrum" with contract address
   // - Aggregate with your own failure analysis
 
-  console.log(`[Integration] Enriching incident ${onchainIncident.txHash} with onchain verification`);
 
   // Example: Update your causalityAnalyzer or trace storage
   if (indexer.traceStore) {
@@ -125,7 +124,6 @@ export function mountOnchainRoutes(app, listener) {
   app.get('/api/incidents/onchain/:txHash', endpoint.detailHandler.bind(endpoint));
   app.get('/api/failures/top', endpoint.topFailuresHandler.bind(endpoint));
 
-  console.log('[API] Mounted onchain incident routes');
 }
 
 export default { initOnchainIntegration, mountOnchainRoutes, createOnchainIncidentEndpoint };

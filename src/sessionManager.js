@@ -73,7 +73,6 @@ export function initSessionManager() {
       CREATE INDEX IF NOT EXISTS idx_session_viewers_session_id ON session_viewers(session_id);
     `);
 
-    console.log('✅ Session manager initialized');
     return true;
   } catch (error) {
     console.error('❌ Failed to initialize session manager:', error);
@@ -140,7 +139,6 @@ export function createSession(options = {}) {
       totalSteps: 0
     });
 
-    console.log(`✅ Session created: ${sessionId}`);
     return sessionId;
   } catch (error) {
     console.error('❌ Failed to create session:', error);
@@ -210,7 +208,6 @@ export function subscribeToSession(client, sessionId) {
   const session = activeSessions.get(sessionId);
   
   if (!session) {
-    console.warn(`⚠️ Cannot subscribe to non-existent session: ${sessionId}`);
     return false;
   }
 
@@ -242,7 +239,6 @@ export function subscribeToSession(client, sessionId) {
     console.error('❌ Failed to update viewer count:', error);
   }
 
-  console.log(`✅ Client subscribed to session ${sessionId} (${session.subscribers.size} subscribers)`);
   return true;
 }
 
@@ -256,7 +252,6 @@ export function unsubscribeFromSession(client, sessionId) {
   
   if (session) {
     session.subscribers.delete(client);
-    console.log(`✅ Client unsubscribed from session ${sessionId}`);
   }
 
   const clientSessions = subscribers.get(client);
@@ -277,7 +272,6 @@ export function removeClient(client) {
       unsubscribeFromSession(client, sessionId);
     }
     subscribers.delete(client);
-    console.log(`✅ Client removed from all sessions`);
   }
 }
 
@@ -292,7 +286,6 @@ export function recordEvent(sessionId, eventType, eventData = {}) {
   const session = activeSessions.get(sessionId);
   
   if (!session) {
-    console.warn(`⚠️ Cannot record event in non-existent session: ${sessionId}`);
     return false;
   }
 
@@ -347,7 +340,6 @@ export function broadcastToSession(sessionId, message) {
   const session = activeSessions.get(sessionId);
   
   if (!session) {
-    console.warn(`⚠️ Cannot broadcast to non-existent session: ${sessionId}`);
     return;
   }
 
@@ -437,7 +429,6 @@ export function archiveSession(sessionId) {
     // Remove from active sessions
     activeSessions.delete(sessionId);
 
-    console.log(`✅ Session archived: ${sessionId}`);
     return true;
   } catch (error) {
     console.error('❌ Failed to archive session:', error);
@@ -479,7 +470,6 @@ export function cleanupExpiredSessions() {
     }
 
     if (expiredSessions.length > 0) {
-      console.log(`✅ Cleaned up ${expiredSessions.length} expired sessions`);
     }
   } catch (error) {
     console.error('❌ Failed to cleanup expired sessions:', error);
@@ -532,7 +522,6 @@ export function startSessionCleanupInterval() {
   setInterval(() => {
     cleanupExpiredSessions();
   }, 5 * 60 * 1000);
-  console.log('✅ Session cleanup interval started (5 min)');
 }
 
 export default {
