@@ -23,15 +23,6 @@ const ARB_RETRYABLE_ABI = [
   'event LifetimeExtended(uint256 indexed ticketId, uint256 newTimeout)'
 ]
 
-// SequencerInbox / Bridge ABI fragments (useful L1 logs)
-export const SEQUENCER_INBOX_ABI = [
-  'event SequencerBatchDelivered(uint256 indexed batchIndex, bytes data)',
-]
-
-export const BRIDGE_ABI = [
-  'event OutboxEntryCreated(bytes32 indexed batchHash, uint256 outboxIndex)'
-]
-
 // Export the ARB_RETRYABLE_ABI for other modules
 export { ARB_RETRYABLE_ABI }
 
@@ -43,7 +34,7 @@ export function getProviders() {
 }
 
 // Helper to race a promise against a timeout
-export async function callWithTimeout(promise, ms) {
+async function callWithTimeout(promise, ms) {
   return Promise.race([
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))

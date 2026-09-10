@@ -215,10 +215,6 @@ export function findL2ForTicket(ticketId) {
   return db.prepare('SELECT * FROM ticket_to_l2tx WHERE ticket_id = ?').get(ticketId)
 }
 
-export function listRecent(limit = 20) {
-  return db.prepare('SELECT * FROM retryable_tickets ORDER BY block_number DESC LIMIT ?').all(limit)
-}
-
 export function stats() {
   try {
     const row = db.prepare('SELECT COUNT(*) as cnt, MAX(block_number) as last_block FROM retryable_tickets').get()
@@ -228,4 +224,4 @@ export function stats() {
   }
 }
 
-export default { indexRange, indexL2Range, getTicket, findByL1Tx, findL2ForTicket, listRecent, stats }
+export default { indexRange, indexL2Range, getTicket, findByL1Tx, findL2ForTicket, stats }

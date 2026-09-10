@@ -40,29 +40,6 @@ export const TEST_SCENARIOS = {
 }
 
 /**
- * Sample transaction hashes for testing (from public Arbitrum mainnet).
- * These are publicly available failed transactions for demo purposes.
- * 
- * To use: Uncomment a tx hash and run:
- *   curl -X POST http://localhost:3000/analyze \
- *     -H "Content-Type: application/json" \
- *     -d '{"txHash":"0x..."}'
- */
-
-export const KNOWN_TEST_TXS = {
-  // Real-world example: A tx that likely has low gas or submission cost issues
-  // (This would need to be a real tx from Arbiscan with visible failure)
-  arbiscan_failed_retryable: '0x', // Placeholder - find a real one
-
-  // Generic revert example
-  arbiscan_l2_revert: '0x', // Placeholder
-
-  // Demo: You can test with any recent Arbitrum tx hash from https://arbiscan.io/
-  // Filter: Status = Failed
-  // Then paste the tx hash into the frontend at http://localhost:3000
-}
-
-/**
  * Validate test results against expected behavior.
  */
 export function validateTestResult(response, scenario) {

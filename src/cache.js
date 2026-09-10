@@ -16,8 +16,4 @@ export function cacheSet(key, value, ttlMs = 5 * 60 * 1000) {
   cache.set(key, { value, expiresAt })
 }
 
-export function cacheDel(key) {
-  cache.delete(key)
-}
-
-export default { cacheGet, cacheSet, cacheDel }
+export default { cacheGet, cacheSet }

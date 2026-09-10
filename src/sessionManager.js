@@ -439,7 +439,7 @@ export function archiveSession(sessionId) {
 /**
  * Clean up expired sessions (runs periodically)
  */
-export function cleanupExpiredSessions() {
+function cleanupExpiredSessions() {
   try {
     const now = Math.floor(Date.now() / 1000);
     
@@ -537,7 +537,6 @@ export default {
   getShareId,
   listActiveSessions,
   archiveSession,
-  cleanupExpiredSessions,
   getSessionStats,
   startSessionCleanupInterval
 };

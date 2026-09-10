@@ -174,7 +174,7 @@ export function analyzeFailurePatterns(gasHistory) {
  * Task 8.5: Get contract-type specific gas ranges
  * Based on Ethereum gas costs + buffer for retryables
  */
-export function getContractTypeGasRanges(contractType) {
+function getContractTypeGasRanges(contractType) {
   const ranges = {
     ERC20: {
       transfer: { min: 60000, typical: 65000, safe: 75000, max: 100000 },
@@ -425,7 +425,6 @@ export default {
   getContractGasHistory,
   calculateGasStatistics,
   analyzeFailurePatterns,
-  getContractTypeGasRanges,
   estimateOptimalGas,
   getGasOptimizationTips,
   buildMLFeatureMatrix

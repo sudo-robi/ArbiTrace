@@ -63,7 +63,7 @@ function enrichIncidentWithOnchainData(indexer, onchainIncident) {
 /**
  * Query onchain incident history (example endpoint)
  */
-export function createOnchainIncidentEndpoint(listener) {
+function createOnchainIncidentEndpoint(listener) {
   return {
     /**
      * GET /api/incidents/onchain
@@ -126,4 +126,4 @@ export function mountOnchainRoutes(app, listener) {
 
 }
 
-export default { initOnchainIntegration, mountOnchainRoutes, createOnchainIncidentEndpoint };
+export default { initOnchainIntegration, mountOnchainRoutes };
